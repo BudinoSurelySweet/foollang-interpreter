@@ -1,6 +1,10 @@
 #ifndef LINKED_LIST_HPP
 #define LINKED_LIST_HPP
 
+#include <cstddef>
+
+
+#pragma region list_node
 
 template <typename T>
 struct list_node
@@ -38,6 +42,11 @@ bool list_node<T>::is_prev_null()
 	return prev == nullptr ? true : false;
 }
 
+#pragma endregion
+
+
+
+#pragma region linked_list
 
 template <typename T>
 struct linked_list
@@ -121,5 +130,8 @@ linked_list<T>::~linked_list()
 {
 	clear();
 }
+
+#pragma endregion
+
 
 #endif

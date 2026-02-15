@@ -94,8 +94,6 @@ ast_expression::ast_expression(linked_list<token*>* linear_expression)
 		}
 		
 	}
-	
-
 }
 
 
