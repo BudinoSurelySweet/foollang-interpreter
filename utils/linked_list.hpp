@@ -4,24 +4,24 @@
 #include <cstddef>
 
 
-#pragma region list_node
+#pragma region Linked List Node
 
 template <typename T>
-struct list_node
+struct lnode
 {
 	T value;
-	list_node<T>* next;
-	list_node<T>* prev;
+	lnode<T>* next;
+	lnode<T>* prev;
 	
 
-	list_node(T new_value);
+	lnode(T new_value);
 	bool is_next_null();
 	bool is_prev_null();
 };
 
 
 template <typename T>
-list_node<T>::list_node(T new_value)
+lnode<T>::lnode(T new_value)
 {
 	value = new_value;
 	next = nullptr;
@@ -30,14 +30,14 @@ list_node<T>::list_node(T new_value)
 
 
 template <typename T>
-bool list_node<T>::is_next_null()
+bool lnode<T>::is_next_null()
 {
 	return next == nullptr ? true : false;
 }
 
 
 template <typename T>
-bool list_node<T>::is_prev_null()
+bool lnode<T>::is_prev_null()
 {
 	return prev == nullptr ? true : false;
 }
@@ -45,26 +45,25 @@ bool list_node<T>::is_prev_null()
 #pragma endregion
 
 
-
-#pragma region linked_list
+#pragma region Linked List
 
 template <typename T>
-struct linked_list
+struct llist
 {
-	list_node<T>* head;
-	list_node<T>* tail;
+	lnode<T>* head;
+	lnode<T>* tail;
 	
 
-	linked_list();
+	llist();
 	void push(T new_value);
 	void append(T new_value);
 	void clear();
-	~linked_list();
+	~llist();
 };
 
 
 template <typename T>
-linked_list<T>::linked_list()
+llist<T>::llist()
 {
 	head = nullptr;
 	tail = nullptr;
@@ -72,7 +71,7 @@ linked_list<T>::linked_list()
 
 
 template <typename T>
-void linked_list<T>::push(T new_value)
+void llist<T>::push(T new_value)
 {
 	if (head and tail)
 	{
@@ -90,9 +89,9 @@ void linked_list<T>::push(T new_value)
 
 
 template <typename T>
-void linked_list<T>::append(T new_value)
+void llist<T>::append(T new_value)
 {
-	list_node<T>* new_node = new list_node<T>(new_value);
+	lnode<T>* new_node = new lnode<T>(new_value);
 
 	if (head and tail)
 	{
@@ -110,9 +109,9 @@ void linked_list<T>::append(T new_value)
 
 
 template <typename T>
-void linked_list<T>::clear()
+void llist<T>::clear()
 {
-	for (list_node<T>* node = head; node != nullptr; node = node->next)
+	for (lnode<T>* node = head; node != nullptr; node = node->next)
 	{
 		if (not node->prev)
 			delete node->prev;
@@ -126,10 +125,24 @@ void linked_list<T>::clear()
 
 
 template <typename T>
-linked_list<T>::~linked_list()
+llist<T>::~llist()
 {
 	clear();
 }
+
+#pragma endregion
+
+
+#pragma region Linked Matrix
+
+template <typename T>
+struct lmatrix : llist<llist<T>*>
+{
+	// This struct can be empty, it's only purpose is to semplify
+	// the writing of a linked list of linked list.
+
+	// It's more readable to write `lmatrix<...>` instead of `llist<llist<...>*>`.
+};
 
 #pragma endregion
 

@@ -1,14 +1,25 @@
-#include <iostream>
-
 #include "evaluator.hpp"
 
-using namespace std;
 
-
-void evaluate_expressions(linked_list<ast_expression*>* expressions)
+static void evaluate_expression(llist<token*>* exp)
 {
-	for (list_node<ast_expression*>* exp = expressions->head; exp != nullptr; exp = exp->next)
+	const size_t OPERATORS_PRECEDENCE_LEVELS = 2;
+	
+	llist<token*> operators[OPERATORS_PRECEDENCE_LEVELS];
+	
+	// TODO Scrivere la logica di valutazione dell'espressione
+}
+
+
+void evaluator(lmatrix<token*>* expression_list)
+{
+	for (
+			lnode<llist<token*>*>* curr_node = expression_list->head;
+			curr_node != nullptr;
+			curr_node = curr_node->next
+	)
 	{
-		cout << exp->value->evaluate() << endl;
+		llist<token*>* curr_expression = curr_node->value;
+		evaluate_expression(curr_expression);
 	}
 }

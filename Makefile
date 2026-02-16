@@ -9,7 +9,7 @@ UTILS    := ./utils
 
 SRCS := $(wildcard $(SRC)/*.cpp) $(wildcard $(UTILS)/*.cpp)
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRCS)))
-TARGET := $(BIN)/mylang
+TARGET := $(BIN)/output
 
 
 .PHONY: all clean directories run
@@ -37,4 +37,5 @@ clean:
 	@rm -rf $(BUILD) $(BIN)
 
 run: all
-	@$(TARGET)
+	@echo "Esecuzione con argomenti: $(ARGS)"
+	@$(TARGET) $(ARGS)
