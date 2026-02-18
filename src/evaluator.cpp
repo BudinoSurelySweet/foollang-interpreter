@@ -1,6 +1,14 @@
 #include "evaluator.hpp"
 
 
+// WARNING è un pensiero veloce, non so se implementare gli operato iin questa maniera. In caso lo facessi forse sarebbe più comodo
+const struct OP_PLUS
+{
+	int precedence = 2;
+	string token = "+";
+};
+
+
 static void evaluate_expression(llist<token*>* exp)
 {
 	const size_t OPERATORS_PRECEDENCE_LEVELS = 2;
@@ -8,6 +16,8 @@ static void evaluate_expression(llist<token*>* exp)
 	llist<token*> operators[OPERATORS_PRECEDENCE_LEVELS];
 	
 	// TODO Scrivere la logica di valutazione dell'espressione
+	
+	// Per ogni esperssione devo guardare gli operatori e poi risolvere quell'espressione.
 }
 
 
