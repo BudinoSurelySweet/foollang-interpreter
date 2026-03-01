@@ -1,18 +1,12 @@
-# **P For Perfect** Interpreter
-
-[**P**]
-
-[**F**]or
-
-[**P**]erfect
+# **Fool** language interpreter
 
 ## Why this project exists?
 
-I created this **interpreter** for the **pfp** language to practice in C++.
+I created this **interpreter** to practice in C++.
 
-## What is the pfp lang?
+## What is the fool lang?
 
-The **P For Perfect** (pfp in short) is a language created and designed by my me. I created it because I needed an excuse to to learn C++.
+The **Fool** lang is a language created and designed by my me. I created it because I needed an excuse to to learn C++.
 
 ## How can I use the interpreter?
 
