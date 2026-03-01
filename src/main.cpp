@@ -3,9 +3,7 @@
 #include <sstream>
 #include <fstream>
 
-#include "lexer.hpp"
-#include "parser.hpp"
-#include "evaluator.hpp"
+#include "interpreter.hpp"
 
 using namespace std;
 
@@ -25,22 +23,6 @@ static string read_file(char* file_path)
 }
 
 
-// WARNING Rimuovere questo sistema di stampa (debug only)
-static void print_token_list(llist<token*>* token_list)
-{
-	for (lnode<token*>* t = token_list->head; t != nullptr; t = t->next)
-	{
-		//cout << " [\033[34;1m" << t->value->value << " (" << static_cast<int>((t->value->value).c_str()[0]) << ")" << "\033[0m]";
-		cout << "[\033[34;1m" << t->value->value << "\033[0m]";
-		
-		if (t->next != nullptr)
-			cout << ", ";
-		else
-			cout << endl;
-	}
-}
-
-
 int main(int argc, char** argv)
 {
 	// TODO Fare un sistema di argomenti migliore
@@ -53,17 +35,19 @@ int main(int argc, char** argv)
 	
 	string source_code = read_file(argv[1]);
 	
-	llist<token*>* token_list = lexer(&source_code);
+	interpret(&source_code);
 	
-	printf("\n\nLexing complete...\nResults are: ");
+	//llist<token*>* token_list = lexer(&source_code);
 	
-	print_token_list(token_list);
+	//printf("\n\nLexing complete...\nResults are: ");
 	
-	lmatrix<token*>* expression_list = parser(token_list);
+	//print_token_list(token_list);
 	
-	printf("Parser ended without errors\n");
+	//lmatrix<token*>* expression_list = parser(token_list);
 	
-	evaluator(expression_list);
+	//printf("Parser ended without errors\n");
+	
+	//evaluator(expression_list);
 	
 	return 0;
 }

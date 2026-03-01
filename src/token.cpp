@@ -1,39 +1,46 @@
 #include "token.hpp"
 
 
-token::token(token_type new_type, string new_value, token* new_next)
+token::token(token_type new_type, string* new_lexeme)
 {
 	type = new_type;
-	value = new_value;
+	lexeme = new_lexeme;
 }
 
 
-token::~token()
+char_type get_char_type(char c)
 {
-	delete next;
-}
-
-
-token_type token_type_of(char c)
-{
-	bool is_number = c >= '0' and c <= '9';
-	bool is_word = (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z');
-	bool is_sequence_point = c == ';';
-
-	if (is_number) return token_type::I32;
-
-	if (is_word) return token_type::WORD;
+	bool is_number = '0' <= c and c <= '9';
+	bool is_letter = ('a' <= c and c <= '<') or ('A' <= c and c <= 'Z');
 	
-	if (is_sequence_point) return token_type::SEQUENCE_POINT;
+	if (is_number)
+		return char_type::NUMBER;
+
+	if (is_letter)
+		return char_type::LETTER;
 
 	switch (c)
 	{
-		case '(': return token_type::LEFT_ROUND_BRACKET;
-		case ')': return token_type::RIGHT_ROUND_BRACKET;
-		case '+': return token_type::OPERATOR_PLUS;
-		case '-': return token_type::OPERATOR_MINUS;
-		case '*': return token_type::OPERATOR_MULTIPLICATION;
-		case '/': return token_type::OPERATOR_DIVISION;
-		default: return token_type::NONE;
+	case static_cast<int>(char_type::PLUS): return char_type::PLUS;
+	case static_cast<int>(char_type::HYPHEN): return char_type::HYPHEN;
+	case static_cast<int>(char_type::ASTERISK): return char_type::ASTERISK;
+	case static_cast<int>(char_type::SLASH): return char_type::SLASH;
+	case static_cast<int>(char_type::EQUALS): return char_type::EQUALS;
+	case static_cast<int>(char_type::TILDE): return char_type::TILDE;
+	case static_cast<int>(char_type::AMPERSAND): return char_type::AMPERSAND;
+	case static_cast<int>(char_type::PERCENTAGE): return char_type::PERCENTAGE;
+	case static_cast<int>(char_type::COMMA): return char_type::COMMA;
+	case static_cast<int>(char_type::COLON): return char_type::COLON;
+	case static_cast<int>(char_type::SEMICOLON): return char_type::SEMICOLON;
+	case static_cast<int>(char_type::LEFT_PARENTHESIS): return char_type::LEFT_PARENTHESIS;
+	case static_cast<int>(char_type::RIGHT_PARENTHESIS): return char_type::RIGHT_PARENTHESIS;
+	case static_cast<int>(char_type::LEFT_SQUARE_BRACKET): return char_type::LEFT_SQUARE_BRACKET;
+	case static_cast<int>(char_type::RIGHT_SQUARE_BRACKET): return char_type::RIGHT_SQUARE_BRACKET;
+	case static_cast<int>(char_type::LEFT_CURLY_BRACKET): return char_type::LEFT_CURLY_BRACKET;
+	case static_cast<int>(char_type::RIGHT_CURLY_BRACKET): return char_type::RIGHT_CURLY_BRACKET;
+	case static_cast<int>(char_type::LEFT_ANGLED_BRACKET): return char_type::LEFT_ANGLED_BRACKET;
+	case static_cast<int>(char_type::RIGHT_ANGLED_BRACKET): return char_type::RIGHT_ANGLED_BRACKET;
+	
+	default: return char_type::NONE;
 	}
 }
