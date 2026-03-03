@@ -44,6 +44,8 @@ enum class char_type
 enum class token_type
 {
 	NONE,
+
+	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
 	
 	NUMBERS_H,
 
@@ -110,16 +112,18 @@ enum class operator_arity
 
 struct token
 {
-private:
 	token_type type;
-	string* lexeme;
+	size_t lexeme_pos;
+	size_t lexeme_len;
 	
-public:
-	token(token_type new_type, string* new_lexeme);
+	token(token_type new_type, size_t new_lexeme_pos, size_t new_lexeme_len);
 };
 
 
 char_type get_char_type(char c);
+
+
+token_type get_token_type(char_type c);
 
 
 token_type get_operator_precedence(token_type t);
@@ -129,6 +133,9 @@ operator_arity get_operator_associativity(char c);
 
 
 operator_arity get_operator_arity(char c);
+
+
+bool can_char_be_in_token(token_type t, char_type c);
 
 
 #endif

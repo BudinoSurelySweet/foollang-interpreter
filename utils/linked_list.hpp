@@ -55,8 +55,8 @@ struct llist
 	
 
 	llist();
-	void push(T new_value);
-	void append(T new_value);
+	lnode<T>* push(T new_value);
+	lnode<T>* append(T new_value);
 	void clear();
 	~llist();
 };
@@ -71,25 +71,29 @@ llist<T>::llist()
 
 
 template <typename T>
-void llist<T>::push(T new_value)
+lnode<T>* llist<T>::push(T new_value)
 {
+	lnode<T>* new_node = new lnode<T>(new_value);
+
 	if (head and tail)
 	{
-		new_value->next = head;
-		head->prev = new_value;
-		head = new_value;
+		new_node->next = head;
+		head->prev = new_node;
+		head = new_node;
 	}
 
 	if (not head)
-		head = new_value;
+		head = new_node;
 	
 	if (not tail)
-		tail = new_value;
+		tail = new_node;
+	
+	return new_node;
 }
 
 
 template <typename T>
-void llist<T>::append(T new_value)
+lnode<T>* llist<T>::append(T new_value)
 {
 	lnode<T>* new_node = new lnode<T>(new_value);
 
@@ -105,6 +109,8 @@ void llist<T>::append(T new_value)
 	
 	if (not tail)
 		tail = new_node;
+	
+	return new_node;
 }
 
 
