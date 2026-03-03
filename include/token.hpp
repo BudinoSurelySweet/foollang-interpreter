@@ -54,6 +54,7 @@ enum class token_type
 		I32, // 32 bit - 4 bytes
 		I64, // 64 bit - 8 bytes
 
+	END_NUMBERS_H,
 	OPERATOR_H,
 
 		PRECEDENCE_LEVEL_1,
@@ -85,6 +86,7 @@ enum class token_type
 
 			COMMA,
 
+	END_OPERATOR_H,
 	PUNCTUATION_H,
 
 		SEQUENCE_POINT,
@@ -133,6 +135,9 @@ operator_arity get_operator_associativity(char c);
 
 
 operator_arity get_operator_arity(char c);
+
+
+bool is_operator(token_type t);
 
 
 bool can_char_be_in_token(token_type t, char_type c);

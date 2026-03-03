@@ -76,6 +76,15 @@ token_type get_token_type(char_type c)
 }
 
 
+bool is_operator(token_type t)
+{
+	if (t > token_type::OPERATOR_H and t < token_type::END_OPERATOR_H)
+		return true;
+
+	return false;
+}
+
+
 bool can_char_be_in_token(token_type t, char_type c)
 {
 	if (c == char_type::NUMBER)

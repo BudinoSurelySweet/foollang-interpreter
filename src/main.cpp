@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "interpreter.hpp"
+#include "color.hpp"
 
 using namespace std;
 
@@ -28,7 +29,7 @@ int main(int argc, char** argv)
 	// TODO Fare un sistema di argomenti migliore
 	if (argc < 2)
 	{
-		cerr << "No file to interpret" << endl;
+		cerr << color("[Error] No file to interpret", RED) << endl;
 		
 		return 1;
 	}
@@ -36,18 +37,6 @@ int main(int argc, char** argv)
 	string source_code = read_file(argv[1]);
 	
 	interpret(&source_code);
-	
-	//llist<token*>* token_list = lexer(&source_code);
-	
-	//printf("\n\nLexing complete...\nResults are: ");
-	
-	//print_token_list(token_list);
-	
-	//lmatrix<token*>* expression_list = parser(token_list);
-	
-	//printf("Parser ended without errors\n");
-	
-	//evaluator(expression_list);
-	
+
 	return 0;
 }

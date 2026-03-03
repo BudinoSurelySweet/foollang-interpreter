@@ -65,13 +65,21 @@ void interpret(string* source_code)
 	// A matrix that contain expressions (a linked list of tokens)
 	lmatrix<token*>* expressions = new lmatrix<token*>;
 
-	// It helps to keep track of the current expression
-	lnode<llist<token*>*>* curr_expression = nullptr;
+	// It helps to keep track of the current expression inside the `expressions` matrix
+	lnode<llist<token*>*>* curr_expr = nullptr;
 	
+	// A matrix that contain only the operators for each expression
+	lmatrix<lnode<token*>*>* operators = new lmatrix<lnode<token*>*>;
+	
+	// It helps to keep track of the current expression inside the `operators` matrix
+	lnode<llist<lnode<token*>*>*>* curr_operator_expr = nullptr;
+	
+	// Keep track of the character position inside the `source_code`
 	int character_pos = 0;
 
-	// Initialize the first expression (linked list) and connect it to the iterator
-	curr_expression = expressions->append(new llist<token*>);
+	// Initialize the first expression (linked list) and connect it to the bookmark (variable that keep track of the current expression)
+	curr_expr = expressions->append(new llist<token*>);
+	curr_operator_expr = operators->append(new llist<lnode<token*>*>);
 
 	// Iterate over all the `source_code`
 	for (auto target_char = source_code->begin(); target_char != source_code->end(); ++target_char, ++character_pos)
@@ -82,12 +90,18 @@ void interpret(string* source_code)
 		if (not curr_token)
 			continue;
 		
-		curr_expression->value->append(curr_token);
-	
+		lnode<token*>* curr_node = curr_expr->value->append(curr_token);
+		
+		if (is_operator(curr_token->type))
+		{
+			curr_operator_expr->value->append(curr_node);
+		}
+		
 		if (curr_token->type == token_type::SEQUENCE_POINT)
 		{
-			expressions->append(new llist<token*>);
-			curr_expression = curr_expression->next;
+			// Create another expression and update the bookmark (variable that keep track of the current expression)
+			curr_expr = expressions->append(new llist<token*>);
+			curr_operator_expr = operators->append(new llist<lnode<token*>*>);
 		}
 	}
 
