@@ -1,6 +1,9 @@
 #ifndef LINKED_LIST_HPP
 #define LINKED_LIST_HPP
 
+#include "color.hpp"
+#include <iostream>
+
 #include <cstddef>
 
 
@@ -103,7 +106,7 @@ lnode<T>* llist<T>::append(T new_value)
 		new_node->prev = tail;
 		tail = new_node;
 	}
-
+	
 	if (not head)
 		head = new_node;
 	

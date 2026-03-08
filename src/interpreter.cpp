@@ -1,3 +1,6 @@
+#include <vector>
+#include <memory>
+
 #include "interpreter.hpp"
 #include "token.hpp"
 #include "linked_list.hpp"
@@ -7,6 +10,48 @@
 #include <iostream>
 
 using namespace std;
+
+
+// TODO Aggiungere la dichiarazione nell .hpp
+static llist<lnode<token*>*>* create_operator_list(lnode<token*>* token_to_insert, bool end = false)
+{
+	int target_precedence_level;
+	static bool is_list_initialized = false;
+	static vector<vector<lnode<token*>*>> levels_of_precedence;
+	
+	if (not is_list_initialized)
+	{
+		is_list_initialized = true;
+		levels_of_precedence.resize(14);
+	}
+		
+	if (end)
+	{
+		auto* result_list = new llist<lnode<token*>*>;
+		is_list_initialized = false;
+
+		for (auto& row_vector : levels_of_precedence)
+		{
+			for (auto*& tok : row_vector)
+			{
+				result_list->append(tok);
+			}
+		}
+		
+		levels_of_precedence.clear();
+		
+		return result_list;
+	}
+	
+	target_precedence_level = operator_precedence_to_int(token_to_insert->value->type);
+	
+	// Add the element to the corrispondent level
+	//auto lvl = levels_of_precedence[target_level - 1];
+	auto& lvl = levels_of_precedence.at(target_precedence_level - 1);
+	lvl.push_back(token_to_insert);
+	
+	return nullptr;
+}
 
 
 // TODO Aggiungere la dichiarazione nell .hpp
@@ -63,23 +108,19 @@ static token* create_token(string* source_code, size_t pos)
 void interpret(string* source_code)
 {
 	// A matrix that contain expressions (a linked list of tokens)
-	lmatrix<token*>* expressions = new lmatrix<token*>;
+	auto* expressions = new lmatrix<token*>;
 
 	// It helps to keep track of the current expression inside the `expressions` matrix
 	lnode<llist<token*>*>* curr_expr = nullptr;
 	
 	// A matrix that contain only the operators for each expression
-	lmatrix<lnode<token*>*>* operators = new lmatrix<lnode<token*>*>;
-	
-	// It helps to keep track of the current expression inside the `operators` matrix
-	lnode<llist<lnode<token*>*>*>* curr_operator_expr = nullptr;
-	
+	auto* operators = new lmatrix<lnode<token*>*>;
+
 	// Keep track of the character position inside the `source_code`
 	int character_pos = 0;
 
 	// Initialize the first expression (linked list) and connect it to the bookmark (variable that keep track of the current expression)
 	curr_expr = expressions->append(new llist<token*>);
-	curr_operator_expr = operators->append(new llist<lnode<token*>*>);
 
 	// Iterate over all the `source_code`
 	for (auto target_char = source_code->begin(); target_char != source_code->end(); ++target_char, ++character_pos)
@@ -93,21 +134,21 @@ void interpret(string* source_code)
 		lnode<token*>* curr_node = curr_expr->value->append(curr_token);
 		
 		if (is_operator(curr_token->type))
-		{
-			curr_operator_expr->value->append(curr_node);
-		}
-		
+			create_operator_list(curr_node);
+
 		if (curr_token->type == token_type::SEQUENCE_POINT)
 		{
 			// Create another expression and update the bookmark (variable that keep track of the current expression)
 			curr_expr = expressions->append(new llist<token*>);
-			curr_operator_expr = operators->append(new llist<lnode<token*>*>);
+			operators->append(create_operator_list(nullptr, true));
 		}
 	}
 
-	// WARNING Print all matrix
+	// WARNING Print expressions matrix
 	for (auto curr_list = expressions->head; curr_list != nullptr; curr_list = curr_list->next)
 	{
+		cout << "- ";
+
 		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
 		{
 			token* t = curr_node->value;
@@ -116,5 +157,45 @@ void interpret(string* source_code)
 		}
 		
 		cout << endl;
+	}
+	
+	cout << endl;
+
+	// WARNING Print operators matrix
+	for (auto curr_list = operators->head; curr_list != nullptr; curr_list = curr_list->next)
+	{
+		cout << "- ";
+
+		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
+		{
+			token* t = curr_node->value->value;
+			string s = (*source_code).substr(t->lexeme_pos, t->lexeme_len);
+			cout << "[" << s << "] ";
+		}
+		
+		cout << endl;
+	}
+	
+
+	for (auto curr_list = operators->head; curr_list != nullptr; curr_list = curr_list->next)
+	{
+		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
+		{
+			if (not curr_node->prev or not curr_node->next)
+			{
+				cout << color("[Error] Un operando è nullo.", RED) << endl;
+				exit(1);
+			}
+			
+			token* t = curr_node->value->value;
+			auto* prev_node = curr_node->prev->value;
+			auto* next_node = curr_node->next->value;
+			
+			if (prev_node->value->type == token_type::I32 and next_node->value->type == token_type::I32)
+			{
+				// TODO Continuare da qui
+
+			}
+		}
 	}
 }

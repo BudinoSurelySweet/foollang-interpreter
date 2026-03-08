@@ -76,6 +76,102 @@ token_type get_token_type(char_type c)
 }
 
 
+token_type get_operator_precedence(token_type t)
+{
+	if (t > token_type::PRECEDENCE_LEVEL_1 and t < token_type::PRECEDENCE_LEVEL_2)
+		return token_type::PRECEDENCE_LEVEL_1;
+
+	if (t > token_type::PRECEDENCE_LEVEL_2 and t < token_type::PRECEDENCE_LEVEL_3)
+		return token_type::PRECEDENCE_LEVEL_2;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_3 and t < token_type::PRECEDENCE_LEVEL_4)
+		return token_type::PRECEDENCE_LEVEL_3;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_4 and t < token_type::PRECEDENCE_LEVEL_5)
+		return token_type::PRECEDENCE_LEVEL_4;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_5 and t < token_type::PRECEDENCE_LEVEL_6)
+		return token_type::PRECEDENCE_LEVEL_5;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_6 and t < token_type::PRECEDENCE_LEVEL_7)
+		return token_type::PRECEDENCE_LEVEL_6;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_7 and t < token_type::PRECEDENCE_LEVEL_8)
+		return token_type::PRECEDENCE_LEVEL_7;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_8 and t < token_type::PRECEDENCE_LEVEL_9)
+		return token_type::PRECEDENCE_LEVEL_8;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_9 and t < token_type::PRECEDENCE_LEVEL_10)
+		return token_type::PRECEDENCE_LEVEL_9;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_10 and t < token_type::PRECEDENCE_LEVEL_11)
+		return token_type::PRECEDENCE_LEVEL_10;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_11 and t < token_type::PRECEDENCE_LEVEL_12)
+		return token_type::PRECEDENCE_LEVEL_11;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_12 and t < token_type::PRECEDENCE_LEVEL_13)
+		return token_type::PRECEDENCE_LEVEL_12;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_13 and t < token_type::PRECEDENCE_LEVEL_14)
+		return token_type::PRECEDENCE_LEVEL_13;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_14 and t < token_type::END_OPERATOR_H)
+		return token_type::PRECEDENCE_LEVEL_14;
+
+	return token_type::NONE;
+}
+
+
+int operator_precedence_to_int(token_type t)
+{
+	if (t > token_type::PRECEDENCE_LEVEL_1 and t < token_type::PRECEDENCE_LEVEL_2)
+		return 1;
+
+	if (t > token_type::PRECEDENCE_LEVEL_2 and t < token_type::PRECEDENCE_LEVEL_3)
+		return 2;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_3 and t < token_type::PRECEDENCE_LEVEL_4)
+		return 3;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_4 and t < token_type::PRECEDENCE_LEVEL_5)
+		return 4;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_5 and t < token_type::PRECEDENCE_LEVEL_6)
+		return 5;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_6 and t < token_type::PRECEDENCE_LEVEL_7)
+		return 6;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_7 and t < token_type::PRECEDENCE_LEVEL_8)
+		return 7;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_8 and t < token_type::PRECEDENCE_LEVEL_9)
+		return 8;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_9 and t < token_type::PRECEDENCE_LEVEL_10)
+		return 9;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_10 and t < token_type::PRECEDENCE_LEVEL_11)
+		return 10;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_11 and t < token_type::PRECEDENCE_LEVEL_12)
+		return 11;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_12 and t < token_type::PRECEDENCE_LEVEL_13)
+		return 12;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_13 and t < token_type::PRECEDENCE_LEVEL_14)
+		return 13;
+	
+	if (t > token_type::PRECEDENCE_LEVEL_14 and t < token_type::END_OPERATOR_H)
+		return 14;
+
+	return -1;
+}
+
+
 bool is_operator(token_type t)
 {
 	if (t > token_type::OPERATOR_H and t < token_type::END_OPERATOR_H)

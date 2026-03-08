@@ -1,5 +1,5 @@
 CXX      := g++
-CXXFLAGS := -std=c++11 -Wall -g -Iinclude -Iutils
+CXXFLAGS := -std=c++23 -Wall -Wextra -g -Iinclude -Iutils
 LDFLAGS  := 
 BUILD    := ./obj
 BIN      := ./bin

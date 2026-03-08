@@ -112,8 +112,9 @@ enum class operator_arity
 };
 
 
-struct token
+class token
 {
+public:
 	token_type type;
 	size_t lexeme_pos;
 	size_t lexeme_len;
@@ -129,6 +130,9 @@ token_type get_token_type(char_type c);
 
 
 token_type get_operator_precedence(token_type t);
+
+
+int operator_precedence_to_int(token_type t);
 
 
 operator_arity get_operator_associativity(char c);
