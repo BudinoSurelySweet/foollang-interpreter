@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "linked_list.hpp"
+
 using namespace std;
 
 
@@ -116,10 +118,9 @@ class token
 {
 public:
 	token_type type;
-	size_t lexeme_pos;
-	size_t lexeme_len;
+	string lexeme;
 	
-	token(token_type new_type, size_t new_lexeme_pos, size_t new_lexeme_len);
+	token(token_type new_type, string new_lexeme);
 };
 
 
@@ -135,10 +136,22 @@ token_type get_operator_precedence(token_type t);
 int operator_precedence_to_int(token_type t);
 
 
+bool are_operands_valid(token_type target_operator, token_type first_operand);
+
+
+bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand);
+
+
+bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand, token_type third_operand);
+
+
 operator_arity get_operator_associativity(char c);
 
 
-operator_arity get_operator_arity(char c);
+operator_arity get_operator_arity(token_type t);
+
+
+void evaluate_operands(llist<token*>* list, token* op, lnode<token*>* first_operand, lnode<token*>* second_operand);
 
 
 bool is_operator(token_type t);

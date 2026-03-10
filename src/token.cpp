@@ -6,11 +6,10 @@
 using namespace std;
 
 
-token::token(token_type new_type, size_t new_lexeme_pos, size_t new_lexeme_len)
+token::token(token_type new_type, string new_lexeme)
 {
 	type = new_type;
-	lexeme_pos = new_lexeme_pos;
-	lexeme_len = new_lexeme_len;
+	lexeme = new_lexeme;
 }
 
 
@@ -169,6 +168,134 @@ int operator_precedence_to_int(token_type t)
 		return 14;
 
 	return -1;
+}
+
+
+//bool are_operands_valid(token_type target_operator, token_type first_operand)
+//{
+//	operator_arity arity = get_operator_arity(target_operator);
+	
+//	if (arity == operator_arity::NONE or arity != operator_arity::UNARY)
+//		return false;
+//}
+
+
+bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand)
+{
+	operator_arity arity = get_operator_arity(target_operator);
+	
+	if (arity == operator_arity::NONE or arity != operator_arity::BINARY)
+		return false;
+
+	bool first_operand_is_number = (
+		first_operand == token_type::I8 or first_operand == token_type::I16
+		or first_operand == token_type::I32 or first_operand == token_type::I64
+	);
+	
+	bool second_operand_is_number = (
+		second_operand == token_type::I8 or second_operand == token_type::I16
+		or second_operand == token_type::I32 or second_operand == token_type::I64
+	);
+
+	switch (target_operator)
+	{
+	case token_type::MULTIPLICATION:
+	case token_type::DIVISION:
+	case token_type::PLUS:
+	case token_type::MINUS:
+		if (first_operand_is_number and second_operand_is_number)
+			return true;
+		
+		return false;
+	
+	default:
+		break;
+	}
+
+	return false;
+}
+
+
+//bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand, token_type third_operand)
+//{
+//	operator_arity arity = get_operator_arity(target_operator);
+	
+//	if (arity == operator_arity::NONE or arity != operator_arity::TERNARY)
+//		return false;
+//}
+
+
+operator_arity get_operator_arity(token_type t)
+{
+	if (not is_operator(t))
+		return operator_arity::NONE;
+	
+	switch (t)
+	{
+	case token_type::MULTIPLICATION:
+	case token_type::DIVISION:
+	case token_type::REMAINDER:
+	case token_type::PLUS:
+	case token_type::MINUS:
+		return operator_arity::BINARY;
+	
+	default:
+		break;
+	}
+	
+	return operator_arity::NONE;
+}
+
+
+void evaluate_operands(llist<token*>* list, token* op, lnode<token*>* first_operand, lnode<token*>* second_operand)
+{
+	// TODO Create integer promotion
+	// ...
+	
+	auto left_number = atoi(first_operand->value->lexeme.c_str());
+	auto right_number = atoi(second_operand->value->lexeme.c_str());
+
+	switch (op->type)
+	{
+	case token_type::PLUS:
+		op->lexeme = to_string(left_number + right_number);
+		op->type = token_type::I32;
+		
+		list->remove_node(first_operand);
+		list->remove_node(second_operand);
+
+		break;
+	
+	case token_type::MINUS:
+		op->lexeme = to_string(left_number - right_number);
+		op->type = token_type::I32;
+
+		list->remove_node(first_operand);
+		list->remove_node(second_operand);
+		
+		break;
+	
+	case token_type::MULTIPLICATION:
+		op->lexeme = to_string(left_number * right_number);
+		op->type = token_type::I32;
+
+		list->remove_node(first_operand);
+		list->remove_node(second_operand);
+		
+		break;
+
+	case token_type::DIVISION:
+		op->lexeme = to_string(left_number / right_number);
+		op->type = token_type::I32;
+
+		list->remove_node(first_operand);
+		list->remove_node(second_operand);
+		
+		break;
+	
+	default:
+		break;
+	}
 }
 
 

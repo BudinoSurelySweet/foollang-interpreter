@@ -60,6 +60,7 @@ struct llist
 	llist();
 	lnode<T>* push(T new_value);
 	lnode<T>* append(T new_value);
+	void remove_node(lnode<T>* node);
 	void clear();
 	~llist();
 };
@@ -114,6 +115,29 @@ lnode<T>* llist<T>::append(T new_value)
 		tail = new_node;
 	
 	return new_node;
+}
+
+
+template <typename T>
+void llist<T>::remove_node(lnode<T>* node)
+{
+	if (not node)
+		return;
+
+	auto prev = node->prev;
+	auto next = node->next;
+	
+	if (prev)
+		prev->next = next;
+	else
+		head = next;
+	
+	if (next)
+		next->prev = prev;
+	else
+		tail = prev;
+
+	delete node;
 }
 
 

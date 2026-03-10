@@ -46,7 +46,6 @@ static llist<lnode<token*>*>* create_operator_list(lnode<token*>* token_to_inser
 	target_precedence_level = operator_precedence_to_int(token_to_insert->value->type);
 	
 	// Add the element to the corrispondent level
-	//auto lvl = levels_of_precedence[target_level - 1];
 	auto& lvl = levels_of_precedence.at(target_precedence_level - 1);
 	lvl.push_back(token_to_insert);
 	
@@ -88,7 +87,8 @@ static token* create_token(string* source_code, size_t pos)
 	}
 	else
 	{
-		token* t = new token(context_type, context_pos, context_size);
+		string lexeme = source_code->substr(context_pos, context_size);
+		token* t = new token(context_type, lexeme);
 		
 		// Resetting static variables
 		is_creating = false;
@@ -117,14 +117,17 @@ void interpret(string* source_code)
 	auto* operators = new lmatrix<lnode<token*>*>;
 
 	// Keep track of the character position inside the `source_code`
-	int character_pos = 0;
+	int character_pos = -1;	
 
 	// Initialize the first expression (linked list) and connect it to the bookmark (variable that keep track of the current expression)
 	curr_expr = expressions->append(new llist<token*>);
 
 	// Iterate over all the `source_code`
-	for (auto target_char = source_code->begin(); target_char != source_code->end(); ++target_char, ++character_pos)
+	for (char c : *source_code)
 	{
+		character_pos++;
+
+		// TODO Rimuovere `character_pos` e sostituire nella funzione `create_token` la posizione con il carattere visto che ora c'è l'ho
 		token* curr_token = create_token(source_code, character_pos);
 		
 		// Check if the token is available or not
@@ -144,6 +147,8 @@ void interpret(string* source_code)
 		}
 	}
 
+	cout << endl << "Tokens:" << endl;
+
 	// WARNING Print expressions matrix
 	for (auto curr_list = expressions->head; curr_list != nullptr; curr_list = curr_list->next)
 	{
@@ -152,14 +157,13 @@ void interpret(string* source_code)
 		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
 		{
 			token* t = curr_node->value;
-			string s = (*source_code).substr(t->lexeme_pos, t->lexeme_len);
-			cout << "[" << s << "] ";
+			cout << "[" << t->lexeme << "] ";
 		}
 		
 		cout << endl;
 	}
 	
-	cout << endl;
+	cout << endl << "Operators' precedence:" << endl;
 
 	// WARNING Print operators matrix
 	for (auto curr_list = operators->head; curr_list != nullptr; curr_list = curr_list->next)
@@ -169,33 +173,54 @@ void interpret(string* source_code)
 		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
 		{
 			token* t = curr_node->value->value;
-			string s = (*source_code).substr(t->lexeme_pos, t->lexeme_len);
-			cout << "[" << s << "] ";
+			cout << "[" << t->lexeme << "] ";
 		}
 		
 		cout << endl;
 	}
 	
-
-	for (auto curr_list = operators->head; curr_list != nullptr; curr_list = curr_list->next)
+	auto current_expression = expressions->head;
+	for (auto list = operators->head; list != nullptr; list = list->next, current_expression = current_expression->next)
 	{
-		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
+		for (auto node = list->value->head; node != nullptr; node = node->next)
 		{
-			if (not curr_node->prev or not curr_node->next)
+			auto& ref_node = node->value;
+			auto& tok = ref_node->value;
+			
+			// HACK For now I created a simple error message if the operator doesn't has one ore more operator,
+			// but I want to create a general way to push errors, so the codebase will be more coherent.
+			if (not ref_node->prev or not ref_node->next)
 			{
-				cout << color("[Error] Un operando è nullo.", RED) << endl;
+				cout << color("[Error] Operator doesn't has one or more operands", RED) << endl;
 				exit(1);
 			}
 			
-			token* t = curr_node->value->value;
-			auto* prev_node = curr_node->prev->value;
-			auto* next_node = curr_node->next->value;
-			
-			if (prev_node->value->type == token_type::I32 and next_node->value->type == token_type::I32)
+			if (are_operands_valid(tok->type, ref_node->prev->value->type, ref_node->next->value->type))
 			{
-				// TODO Continuare da qui
-
+				evaluate_operands(current_expression->value, tok, ref_node->prev, ref_node->next);
 			}
+			else
+			{
+				cout << color("[Error] An operand is not valid", RED) << endl;
+				exit(1);
+			}
+			
 		}
+	}
+	
+	cout << endl << "Results:" << endl;
+
+	// WARNING Experimental
+	for (auto curr_list = expressions->head; curr_list != nullptr; curr_list = curr_list->next)
+	{
+		cout << "- ";
+
+		for (auto curr_node = curr_list->value->head; curr_node != nullptr; curr_node = curr_node->next)
+		{
+			token* t = curr_node->value;
+			cout << "[" << t->lexeme << "] ";
+		}
+		
+		cout << endl;
 	}
 }
