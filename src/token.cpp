@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "token.hpp"
-#include "color.hpp"
 
 using namespace std;
 
@@ -10,6 +9,53 @@ token::token(token_type new_type, string new_lexeme)
 {
 	type = new_type;
 	lexeme = new_lexeme;
+}
+
+
+optional<token> create_token(char character)
+{
+	static bool is_creating = false;
+	static token_type context_type = token_type::NONE;
+	static string context = "";
+
+	char_type character_type = get_char_type(character);
+	
+	// Character is invalid
+	if (get_token_type(character_type) == token_type::NONE and not is_creating)
+		return nullopt;
+
+	if (not is_creating)
+	{
+		is_creating = true;
+		context.push_back(character);
+		context_type = get_token_type(character_type);
+		
+		return nullopt;
+	}
+
+	// Update context case and return token case
+	if (can_char_be_in_token(context_type, character_type))
+	{
+		context.push_back(character);
+		
+		return nullopt;
+	}
+	else
+	{
+		token t = token(context_type, context);
+		
+		// Resetting static variables
+		is_creating = false;
+		context_type = token_type::NONE;
+
+		context.clear();
+		
+		// Re-iter the same character because it was skipped to create the current token.
+		// It's granted that it will start the token and return nullptr.
+		create_token(character);
+
+		return t;
+	}
 }
 
 
@@ -247,55 +293,90 @@ operator_arity get_operator_arity(token_type t)
 }
 
 
-void evaluate_operands(llist<token*>* list, token* op, lnode<token*>* first_operand, lnode<token*>* second_operand)
+void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 {
 	// TODO Create integer promotion
 	// ...
 	
-	auto left_number = atoi(first_operand->value->lexeme.c_str());
-	auto right_number = atoi(second_operand->value->lexeme.c_str());
+	token* first_operand = nullptr;
+	token* second_operand = nullptr;
+
+	// Search the first operand
+	for (int i = static_cast<int>(pos) - 1; i >= 0; i--)
+	{
+		token& operand = (*tokens)[i];
+
+		if (operand.type != token_type::TOMBSTONE)
+		{
+			first_operand = &operand;
+
+			break;
+		}
+	}
+	
+	if (not first_operand)
+	{
+		cout << color("[Error] First operand not found", RED) << endl;
+		exit(1);
+	}
+
+	// Search the second operand
+	for (size_t i = pos + 1; i < tokens->size(); i++)
+	{
+		token& operand = (*tokens)[i];
+
+		if (operand.type != token_type::TOMBSTONE)
+		{
+			second_operand = &operand;
+
+			break;
+		}
+	}
+
+	if (not second_operand)
+	{
+		cout << color("[Error] Second operand not found", RED) << endl;
+		exit(1);
+	}
+
+	auto fop = atoi(first_operand->lexeme.c_str());
+	auto sop = atoi(second_operand->lexeme.c_str());
 
 	switch (op->type)
 	{
 	case token_type::PLUS:
-		op->lexeme = to_string(left_number + right_number);
+		op->lexeme = to_string(fop + sop);
 		op->type = token_type::I32;
-		
-		list->remove_node(first_operand);
-		list->remove_node(second_operand);
 
 		break;
 	
 	case token_type::MINUS:
-		op->lexeme = to_string(left_number - right_number);
+		op->lexeme = to_string(fop - sop);
 		op->type = token_type::I32;
-
-		list->remove_node(first_operand);
-		list->remove_node(second_operand);
 		
 		break;
-	
-	case token_type::MULTIPLICATION:
-		op->lexeme = to_string(left_number * right_number);
-		op->type = token_type::I32;
 
-		list->remove_node(first_operand);
-		list->remove_node(second_operand);
+	case token_type::MULTIPLICATION:
+		op->lexeme = to_string(fop * sop);
+		op->type = token_type::I32;
 		
 		break;
 
 	case token_type::DIVISION:
-		op->lexeme = to_string(left_number / right_number);
+		op->lexeme = to_string(fop / sop);
 		op->type = token_type::I32;
-
-		list->remove_node(first_operand);
-		list->remove_node(second_operand);
 		
 		break;
 	
 	default:
 		break;
 	}
+
+	first_operand->lexeme.clear();
+	first_operand->type = token_type::TOMBSTONE;
+
+	second_operand->lexeme.clear();
+	second_operand->type = token_type::TOMBSTONE;
 }
 
 

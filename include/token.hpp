@@ -1,9 +1,11 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <optional>
+#include <vector>
 #include <string>
 
-#include "linked_list.hpp"
+#include "color.hpp"
 
 using namespace std;
 
@@ -46,6 +48,7 @@ enum class char_type
 enum class token_type
 {
 	NONE,
+	TOMBSTONE,
 
 	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
 	
@@ -124,6 +127,9 @@ public:
 };
 
 
+optional<token> create_token(char character);
+
+
 char_type get_char_type(char c);
 
 
@@ -151,7 +157,7 @@ operator_arity get_operator_associativity(char c);
 operator_arity get_operator_arity(token_type t);
 
 
-void evaluate_operands(llist<token*>* list, token* op, lnode<token*>* first_operand, lnode<token*>* second_operand);
+void evaluate_operands(vector<token>* tokens, token* op, size_t pos);
 
 
 bool is_operator(token_type t);
