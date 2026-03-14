@@ -14,11 +14,15 @@ obj/*
 *.out
 *.app
 
+.clangd
+
 *.txt
+*.fool
 
 .vscode/
 .idea/
 cmake-build-*/
+.cache/
 
 *.swp
 *~

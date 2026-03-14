@@ -1,6 +1,8 @@
+#include <unordered_map>
 #include <iostream>
 
 #include "token.hpp"
+#include "error_manager.hpp"
 
 using namespace std;
 
@@ -59,11 +61,10 @@ optional<token> create_token(char character)
 }
 
 
-// HACK Provare ad automatizzare questo processo
 char_type get_char_type(char c)
 {
 	bool is_number = '0' <= c and c <= '9';
-	bool is_letter = ('a' <= c and c <= '<') or ('A' <= c and c <= 'Z');
+	bool is_letter = ('a' <= c and c <= 'z') or ('A' <= c and c <= 'Z');
 	
 	if (is_number)
 		return char_type::NUMBER;
@@ -71,159 +72,80 @@ char_type get_char_type(char c)
 	if (is_letter)
 		return char_type::LETTER;
 
-	switch (c)
-	{
-	case (int) char_type::PLUS: return char_type::PLUS;
-	case (int) char_type::HYPHEN: return char_type::HYPHEN;
-	case (int) char_type::ASTERISK: return char_type::ASTERISK;
-	case (int) char_type::SLASH: return char_type::SLASH;
-	case (int) char_type::EQUALS: return char_type::EQUALS;
-	case (int) char_type::TILDE: return char_type::TILDE;
-	case (int) char_type::AMPERSAND: return char_type::AMPERSAND;
-	case (int) char_type::PERCENTAGE: return char_type::PERCENTAGE;
-	case (int) char_type::COMMA: return char_type::COMMA;
-	case (int) char_type::COLON: return char_type::COLON;
-	case (int) char_type::SEMICOLON: return char_type::SEMICOLON;
-	case (int) char_type::LEFT_PARENTHESIS: return char_type::LEFT_PARENTHESIS;
-	case (int) char_type::RIGHT_PARENTHESIS: return char_type::RIGHT_PARENTHESIS;
-	case (int) char_type::LEFT_SQUARE_BRACKET: return char_type::LEFT_SQUARE_BRACKET;
-	case (int) char_type::RIGHT_SQUARE_BRACKET: return char_type::RIGHT_SQUARE_BRACKET;
-	case (int) char_type::LEFT_CURLY_BRACKET: return char_type::LEFT_CURLY_BRACKET;
-	case (int) char_type::RIGHT_CURLY_BRACKET: return char_type::RIGHT_CURLY_BRACKET;
-	case (int) char_type::LEFT_ANGLED_BRACKET: return char_type::LEFT_ANGLED_BRACKET;
-	case (int) char_type::RIGHT_ANGLED_BRACKET: return char_type::RIGHT_ANGLED_BRACKET;
+	static const unordered_map<int, char_type> char_map = {
+		{ (int) char_type::PLUS, char_type::PLUS },
+		{ (int) char_type::HYPHEN, char_type::HYPHEN },
+		{ (int) char_type::ASTERISK, char_type::ASTERISK },
+		{ (int) char_type::SLASH, char_type::SLASH },
+		{ (int) char_type::EQUALS, char_type::EQUALS },
+		{ (int) char_type::TILDE, char_type::TILDE },
+		{ (int) char_type::AMPERSAND, char_type::AMPERSAND },
+		{ (int) char_type::PERCENTAGE, char_type::PERCENTAGE },
+		{ (int) char_type::COMMA, char_type::COMMA },
+		{ (int) char_type::COLON, char_type::COLON },
+		{ (int) char_type::SEMICOLON, char_type::SEMICOLON },
+		{ (int) char_type::LEFT_PARENTHESIS, char_type::LEFT_PARENTHESIS },
+		{ (int) char_type::RIGHT_PARENTHESIS, char_type::RIGHT_PARENTHESIS },
+		{ (int) char_type::LEFT_SQUARE_BRACKET, char_type::LEFT_SQUARE_BRACKET },
+		{ (int) char_type::RIGHT_SQUARE_BRACKET, char_type::RIGHT_SQUARE_BRACKET },
+		{ (int) char_type::LEFT_CURLY_BRACKET, char_type::LEFT_CURLY_BRACKET },
+		{ (int) char_type::RIGHT_CURLY_BRACKET, char_type::RIGHT_CURLY_BRACKET },
+		{ (int) char_type::LEFT_ANGLED_BRACKET, char_type::LEFT_ANGLED_BRACKET },
+		{ (int) char_type::RIGHT_ANGLED_BRACKET, char_type::RIGHT_ANGLED_BRACKET },
+	};
 	
-	default: return char_type::NONE;
-	}
+	auto tuple = char_map.find(c);
+	
+	if (tuple != char_map.end())
+		return tuple->second;
+	
+	return char_type::NONE;
 }
 
 
-// HACK Provare ad automatizzare questo processo
 token_type get_token_type(char_type c)
 {
-	switch (c)
-	{
-	case char_type::NUMBER: return token_type::I32;
-	case char_type::LETTER: return token_type::WORD;
-	case char_type::PLUS: return token_type::PLUS;
-	case char_type::HYPHEN: return token_type::MINUS;
-	case char_type::ASTERISK: return token_type::MULTIPLICATION;
-	case char_type::SLASH: return token_type::DIVISION;
-	case char_type::EQUALS: return token_type::ASSIGNMENT;
-	case char_type::PERCENTAGE: return token_type::REMAINDER;
-	case char_type::COMMA: return token_type::COMMA;
-	case char_type::SEMICOLON: return token_type::SEQUENCE_POINT;
-	
-	default:
-		return token_type::NONE;
-		break;
-	}
-}
+	static const unordered_map<char_type, token_type> token_map = {
+		{ char_type::NUMBER, token_type::I32 },
+		{ char_type::LETTER, token_type::WORD },
+		{ char_type::PLUS, token_type::PLUS },
+		{ char_type::HYPHEN, token_type::MINUS },
+		{ char_type::ASTERISK, token_type::MULTIPLICATION },
+		{ char_type::SLASH, token_type::DIVISION },
+		{ char_type::EQUALS, token_type::ASSIGNMENT },
+		{ char_type::PERCENTAGE, token_type::REMAINDER },
+		{ char_type::COMMA, token_type::COMMA },
+		{ char_type::SEMICOLON, token_type::SEQUENCE_POINT },
+	};
 
-
-token_type get_operator_precedence(token_type t)
-{
-	if (t > token_type::PRECEDENCE_LEVEL_1 and t < token_type::PRECEDENCE_LEVEL_2)
-		return token_type::PRECEDENCE_LEVEL_1;
-
-	if (t > token_type::PRECEDENCE_LEVEL_2 and t < token_type::PRECEDENCE_LEVEL_3)
-		return token_type::PRECEDENCE_LEVEL_2;
+	auto tuple = token_map.find(c);
 	
-	if (t > token_type::PRECEDENCE_LEVEL_3 and t < token_type::PRECEDENCE_LEVEL_4)
-		return token_type::PRECEDENCE_LEVEL_3;
+	if (tuple != token_map.end())
+		return tuple->second;
 	
-	if (t > token_type::PRECEDENCE_LEVEL_4 and t < token_type::PRECEDENCE_LEVEL_5)
-		return token_type::PRECEDENCE_LEVEL_4;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_5 and t < token_type::PRECEDENCE_LEVEL_6)
-		return token_type::PRECEDENCE_LEVEL_5;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_6 and t < token_type::PRECEDENCE_LEVEL_7)
-		return token_type::PRECEDENCE_LEVEL_6;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_7 and t < token_type::PRECEDENCE_LEVEL_8)
-		return token_type::PRECEDENCE_LEVEL_7;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_8 and t < token_type::PRECEDENCE_LEVEL_9)
-		return token_type::PRECEDENCE_LEVEL_8;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_9 and t < token_type::PRECEDENCE_LEVEL_10)
-		return token_type::PRECEDENCE_LEVEL_9;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_10 and t < token_type::PRECEDENCE_LEVEL_11)
-		return token_type::PRECEDENCE_LEVEL_10;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_11 and t < token_type::PRECEDENCE_LEVEL_12)
-		return token_type::PRECEDENCE_LEVEL_11;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_12 and t < token_type::PRECEDENCE_LEVEL_13)
-		return token_type::PRECEDENCE_LEVEL_12;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_13 and t < token_type::PRECEDENCE_LEVEL_14)
-		return token_type::PRECEDENCE_LEVEL_13;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_14 and t < token_type::END_OPERATOR_H)
-		return token_type::PRECEDENCE_LEVEL_14;
-
 	return token_type::NONE;
 }
 
 
-int operator_precedence_to_int(token_type t)
+int get_operator_precedence(token_type t)
 {
-	if (t > token_type::PRECEDENCE_LEVEL_1 and t < token_type::PRECEDENCE_LEVEL_2)
-		return 1;
+	static const unordered_map<token_type, int> operator_precedence = {
+		{ token_type::MULTIPLICATION, 3 },
+		{ token_type::DIVISION, 3 },
+		{ token_type::REMAINDER, 3 },
+		{ token_type::PLUS, 4 },
+		{ token_type::MINUS, 4 },
+		{ token_type::ASSIGNMENT, 13 },
+		{ token_type::COMMA, 14 },
+	};
 
-	if (t > token_type::PRECEDENCE_LEVEL_2 and t < token_type::PRECEDENCE_LEVEL_3)
-		return 2;
+	auto tuple = operator_precedence.find(t);
 	
-	if (t > token_type::PRECEDENCE_LEVEL_3 and t < token_type::PRECEDENCE_LEVEL_4)
-		return 3;
+	if (tuple != operator_precedence.end())
+		return tuple->second;
 	
-	if (t > token_type::PRECEDENCE_LEVEL_4 and t < token_type::PRECEDENCE_LEVEL_5)
-		return 4;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_5 and t < token_type::PRECEDENCE_LEVEL_6)
-		return 5;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_6 and t < token_type::PRECEDENCE_LEVEL_7)
-		return 6;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_7 and t < token_type::PRECEDENCE_LEVEL_8)
-		return 7;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_8 and t < token_type::PRECEDENCE_LEVEL_9)
-		return 8;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_9 and t < token_type::PRECEDENCE_LEVEL_10)
-		return 9;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_10 and t < token_type::PRECEDENCE_LEVEL_11)
-		return 10;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_11 and t < token_type::PRECEDENCE_LEVEL_12)
-		return 11;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_12 and t < token_type::PRECEDENCE_LEVEL_13)
-		return 12;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_13 and t < token_type::PRECEDENCE_LEVEL_14)
-		return 13;
-	
-	if (t > token_type::PRECEDENCE_LEVEL_14 and t < token_type::END_OPERATOR_H)
-		return 14;
-
 	return -1;
 }
-
-
-//bool are_operands_valid(token_type target_operator, token_type first_operand)
-//{
-//	operator_arity arity = get_operator_arity(target_operator);
-	
-//	if (arity == operator_arity::NONE or arity != operator_arity::UNARY)
-//		return false;
-//}
 
 
 bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand)
@@ -255,20 +177,12 @@ bool are_operands_valid(token_type target_operator, token_type first_operand, to
 		return false;
 	
 	default:
-		break;
+		cout << color("[Error] Operator doesn't supported", RED) << endl;
+		exit(1);
 	}
 
 	return false;
 }
-
-
-//bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand, token_type third_operand)
-//{
-//	operator_arity arity = get_operator_arity(target_operator);
-	
-//	if (arity == operator_arity::NONE or arity != operator_arity::TERNARY)
-//		return false;
-//}
 
 
 operator_arity get_operator_arity(token_type t)
@@ -315,10 +229,7 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	}
 	
 	if (not first_operand)
-	{
-		cout << color("[Error] First operand not found", RED) << endl;
-		exit(1);
-	}
+		exit_with(interpreter_error::OPERANDS_NOT_VALID);
 
 	// Search the second operand
 	for (size_t i = pos + 1; i < tokens->size(); i++)
@@ -334,11 +245,11 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	}
 
 	if (not second_operand)
-	{
-		cout << color("[Error] Second operand not found", RED) << endl;
-		exit(1);
-	}
-
+		exit_with(interpreter_error::OPERANDS_NOT_VALID);
+	
+	if (not are_operands_valid(op->type, first_operand->type, second_operand->type))
+		exit_with(interpreter_error::OPERANDS_NOT_VALID);
+	
 	auto fop = atoi(first_operand->lexeme.c_str());
 	auto sop = atoi(second_operand->lexeme.c_str());
 

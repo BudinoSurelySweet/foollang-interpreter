@@ -7,16 +7,24 @@
 
 #include "color.hpp"
 
+#define OPERATORS_LEVELS_OF_PRECEDENCE_NUMBER 14
+
 using namespace std;
 
 
 enum class char_type
 {
 	NONE,
+	
+	// TODO Aggiungere il supporto per i caratteri da 0 a 31 (saranno da ignorare nella fase di lexing) + 32 (cioè lo spazio)
+	
+	// TODO Altri carateri saranno da gestire con errori (unexpected_token)
+
+	SPACE = ' ',
 
 	// Group of characters
-	NUMBER, // 0-9
-	LETTER, // a-z A-Z
+	NUMBER = '0', // 0-9
+	LETTER = 'a', // a-z A-Z
 
 	// ...
 	PLUS = '+',
@@ -48,7 +56,7 @@ enum class char_type
 enum class token_type
 {
 	NONE,
-	TOMBSTONE,
+	TOMBSTONE, // Used by the evaluator
 
 	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
 	
@@ -60,43 +68,26 @@ enum class token_type
 		I64, // 64 bit - 8 bytes
 
 	END_NUMBERS_H,
+
 	OPERATOR_H,
 
-		PRECEDENCE_LEVEL_1,
-		PRECEDENCE_LEVEL_2,
-		PRECEDENCE_LEVEL_3,
-
-			MULTIPLICATION,
-			DIVISION,
-			REMAINDER,
-
-		PRECEDENCE_LEVEL_4,
-
-			PLUS,
-			MINUS,
-
-		PRECEDENCE_LEVEL_5,
-		PRECEDENCE_LEVEL_6,
-		PRECEDENCE_LEVEL_7,
-		PRECEDENCE_LEVEL_8,
-		PRECEDENCE_LEVEL_9,
-		PRECEDENCE_LEVEL_10,
-		PRECEDENCE_LEVEL_11,
-		PRECEDENCE_LEVEL_12,
-		PRECEDENCE_LEVEL_13,
-		
-			ASSIGNMENT,
-			
-		PRECEDENCE_LEVEL_14,
-
-			COMMA,
+		MULTIPLICATION,
+		DIVISION,
+		REMAINDER,
+		PLUS,
+		MINUS,
+		ASSIGNMENT,
+		COMMA,
 
 	END_OPERATOR_H,
+
 	PUNCTUATION_H,
 
 		SEQUENCE_POINT,
 		LEFT_GROUP_LIMITER,
 		RIGHT_GROUP_LIMITER,
+
+	END_PUNCTUATION_H,
 };
 
 
@@ -136,10 +127,7 @@ char_type get_char_type(char c);
 token_type get_token_type(char_type c);
 
 
-token_type get_operator_precedence(token_type t);
-
-
-int operator_precedence_to_int(token_type t);
+int get_operator_precedence(token_type t);
 
 
 bool are_operands_valid(token_type target_operator, token_type first_operand);

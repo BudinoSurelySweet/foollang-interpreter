@@ -7,6 +7,22 @@ SRC      := ./src
 INCLUDE  := ./include
 UTILS    := ./utils
 
+# --- Color configuration ---
+# Available colors: RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN
+COLOR ?= GREEN
+
+ANSI_RED     := \033[0;31m
+ANSI_GREEN   := \033[0;32m
+ANSI_YELLOW  := \033[0;33m
+ANSI_BLUE    := \033[0;34m
+ANSI_MAGENTA := \033[0;35m
+ANSI_CYAN    := \033[0;36m
+ANSI_RESET   := \033[0m
+
+C := $(ANSI_$(COLOR))
+R := $(ANSI_RESET)
+# -----------------------------
+
 SRCS := $(wildcard $(SRC)/*.cpp) $(wildcard $(UTILS)/*.cpp)
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRCS)))
 TARGET := $(BIN)/output
@@ -17,16 +33,16 @@ TARGET := $(BIN)/output
 all: directories $(TARGET)
 
 $(TARGET): $(OBJS)
-	@echo "Linking..."
+	@printf "$(C)Linking...$(R)\n"
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
-	@echo "Build completata: $(TARGET)"
+	@printf "$(C)Build completed: $(TARGET)$(R)\n"
 
 $(BUILD)/%.o: $(SRC)/%.cpp
-	@echo "Compiling SRC $<..."
+	@printf "$(C)Compiling SRC $<...$(R)\n"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD)/%.o: $(UTILS)/%.cpp
-	@echo "Compiling UTILS $<..."
+	@printf "$(C)Compiling UTILS $<...$(R)\n"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 directories:
@@ -37,5 +53,5 @@ clean:
 	@rm -rf $(BUILD) $(BIN)
 
 run: all
-	@echo "Esecuzione con argomenti: $(ARGS)"
+	@printf "$(C)Execution with arguments: $(ARGS)$(R)\n"
 	@$(TARGET) $(ARGS)

@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "interpreter.hpp"
+#include "error_manager.hpp"
 #include "color.hpp"
 
 using namespace std;
@@ -13,6 +14,9 @@ static string read_file(char* file_path)
 {
 	ifstream file(file_path);
 	stringstream buffer;
+	
+	if (not file)
+		exit_with(interpreter_error::FILE_NOT_FOUND);
 
 	buffer << file.rdbuf();
 
@@ -28,11 +32,7 @@ int main(int argc, char** argv)
 {
 	// TODO Fare un sistema di argomenti migliore
 	if (argc < 2)
-	{
-		cerr << color("[Error] No file to interpret", RED) << endl;
-		
-		return 1;
-	}
+		exit_with(interpreter_error::FILE_NOT_FOUND);
 	
 	string source_code = read_file(argv[1]);
 	
@@ -40,3 +40,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+

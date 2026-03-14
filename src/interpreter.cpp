@@ -7,7 +7,6 @@
 #include "operator_manager.hpp"
 #include "color.hpp"
 
-// TODO Rimuovere
 #include <iostream>
 
 using namespace std;
@@ -75,7 +74,6 @@ void interpret(string* source_code)
 	
 	cout << endl << endl << "Results:" << endl;
 	
-	// TODO Print the results
 	for (auto &&token : source_code_tokenized)
 	{
 		if (token.type == token_type::TOMBSTONE)

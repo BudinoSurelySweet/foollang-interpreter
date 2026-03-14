@@ -3,14 +3,13 @@
 
 operator_manager::operator_manager()
 {
-	// TODO Remove this magic number
-	levels_of_precedence.resize(14);
+	levels_of_precedence.resize(OPERATORS_LEVELS_OF_PRECEDENCE_NUMBER);
 }
 
 
 void operator_manager::add(token_type type, size_t pos)
 {
-	target_precedence_level = operator_precedence_to_int(type);
+	target_precedence_level = get_operator_precedence(type);
 	
 	if (target_precedence_level < 1 or (size_t)target_precedence_level > levels_of_precedence.size())
 		return;
