@@ -114,11 +114,17 @@ public:
 	token_type type;
 	string lexeme;
 	
-	token(token_type new_type, string new_lexeme);
+	// HACK Storing strings directly inside tokens for now. Since strings allocate their buffer on the heap, 1 million tokens on the stack results in 2 million heap allocations.	string file_name;
+	string file_name;
+	string file_path;
+	size_t row;
+	size_t column;
+	
+	token(token_type new_type, string new_lexeme, string new_file_name, string new_file_path, size_t new_row, size_t new_column);
 };
 
 
-optional<token> create_token(char character);
+optional<token> create_token(char character, string target_file_name, string target_file_path, size_t target_row, size_t target_column);
 
 
 char_type get_char_type(char c);
@@ -133,7 +139,7 @@ int get_operator_precedence(token_type t);
 bool are_operands_valid(token_type target_operator, token_type first_operand);
 
 
-bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand);
+bool are_operands_valid(token* target_operator, token_type first_operand, token_type second_operand);
 
 
 bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand, token_type third_operand);

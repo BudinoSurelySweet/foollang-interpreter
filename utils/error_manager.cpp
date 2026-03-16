@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 
 #include "error_manager.hpp"
 #include "color.hpp"
@@ -6,30 +7,64 @@
 using namespace std;
 
 
-void exit_with(interpreter_error err)
+interpreter_error::interpreter_error(error_id id, string additional_info)
 {
-	int int_err = static_cast<int>(err);
-	string err_prefix = "[Error]";
-	string err_body = "";
+	static const string err_prefix = "[Error]";
+	static const string info_prefix = "[Additional informations]";
+	static const unordered_map<error_id, string> default_message = {
+		{ error_id::FILE_NOT_FOUND, "File not found" },
+		{ error_id::OPERANDS_NOT_VALID, "One or more operands are not valid" },
+		{ error_id::NON_EXISTENT_OPERATOR, "Non existent or implemented operator" },
+	};
+
+	auto tuple = default_message.find(id);
 	
-	switch (err)
+	if (tuple != default_message.end())
+		message = err_prefix + " " + tuple->second;
+	
+	if (not additional_info.empty())
+		info = info_prefix + " " + additional_info;
+}
+
+
+int interpreter_error::get_number_id()
+{
+	return static_cast<int>(id);
+}
+
+
+void exit_with(interpreter_error* err)
+{
+	int exit_number = err->get_number_id();
+	string pos = "";
+	string message = err->message;
+	
+	// Get the position only if available
+	if (not err->file_path.empty())
 	{
-	case interpreter_error::FILE_NOT_FOUND:
-		err_body = "File not found";
-		break;
+		pos += err->file_path;
 
-	case interpreter_error::OPERANDS_NOT_VALID:
-		err_body = "One or more operands are not valid";
-		break;
-	
-	default:
-		err_body = "No error message set for error n. " + to_string(int_err);
-		break;
+		if (err->row)
+		{
+			pos += ":" + to_string(err->row);
+			
+			if (err->column)
+			{
+				pos += ":" + to_string(err->column);
+			}
+		}
 	}
+	
+	// Add the position to the message if available
+	if (not pos.empty())
+		message += " at \"" + pos + "\"";
 
-	string error_message = err_prefix + " " + err_body;
+	// Write error message
+	cout << endl << color(message.c_str(), RED) << endl;
+	cout << endl << color(err->info.c_str(), RED) << endl;
+	
+	delete err;
 
-	cout << endl << color(error_message.c_str(), RED) << endl;
-
-	exit(int_err);
+	// BUG It shows a "random" number, not the intended one
+	exit(exit_number);
 }

@@ -7,18 +7,28 @@
 using namespace std;
 
 
-token::token(token_type new_type, string new_lexeme)
+token::token(token_type new_type, string new_lexeme, string new_file_name, string new_file_path, size_t new_row, size_t new_column)
 {
 	type = new_type;
 	lexeme = new_lexeme;
+
+	file_name = new_file_name;
+	file_path = new_file_path;
+	row = new_row;
+	column = new_column;
 }
 
 
-optional<token> create_token(char character)
+optional<token> create_token(char character, string target_file_name, string target_file_path, size_t target_row, size_t target_column)
 {
 	static bool is_creating = false;
 	static token_type context_type = token_type::NONE;
 	static string context = "";
+
+	static string file_name;
+	static string file_path;
+	static size_t row;
+	static size_t column;
 
 	char_type character_type = get_char_type(character);
 	
@@ -31,6 +41,11 @@ optional<token> create_token(char character)
 		is_creating = true;
 		context.push_back(character);
 		context_type = get_token_type(character_type);
+
+		file_name = target_file_name;
+		file_path = target_file_path;
+		row = target_row;
+		column = target_column;
 		
 		return nullopt;
 	}
@@ -44,7 +59,7 @@ optional<token> create_token(char character)
 	}
 	else
 	{
-		token t = token(context_type, context);
+		token t = token(context_type, context, file_name, file_path, row, column);
 		
 		// Resetting static variables
 		is_creating = false;
@@ -54,7 +69,7 @@ optional<token> create_token(char character)
 		
 		// Re-iter the same character because it was skipped to create the current token.
 		// It's granted that it will start the token and return nullptr.
-		create_token(character);
+		create_token(character, target_file_name, target_file_path, target_row, target_column);
 
 		return t;
 	}
@@ -148,11 +163,11 @@ int get_operator_precedence(token_type t)
 }
 
 
-bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand)
+bool are_operands_valid(token* target_operator, token_type first_operand, token_type second_operand)
 {
-	operator_arity arity = get_operator_arity(target_operator);
+	operator_arity arity = get_operator_arity(target_operator->type);
 	
-	if (arity == operator_arity::NONE or arity != operator_arity::BINARY)
+	if (arity == operator_arity::NONE)
 		return false;
 
 	bool first_operand_is_number = (
@@ -165,7 +180,7 @@ bool are_operands_valid(token_type target_operator, token_type first_operand, to
 		or second_operand == token_type::I32 or second_operand == token_type::I64
 	);
 
-	switch (target_operator)
+	switch (target_operator->type)
 	{
 	case token_type::MULTIPLICATION:
 	case token_type::DIVISION:
@@ -177,8 +192,14 @@ bool are_operands_valid(token_type target_operator, token_type first_operand, to
 		return false;
 	
 	default:
-		cout << color("[Error] Operator doesn't supported", RED) << endl;
-		exit(1);
+		auto err = new interpreter_error(error_id::NON_EXISTENT_OPERATOR);
+
+		err->file_name = target_operator->file_name;
+		err->file_path = target_operator->file_path;
+		err->row = target_operator->row;
+		err->column = target_operator->column;
+
+		exit_with(err);
 	}
 
 	return false;
@@ -197,6 +218,7 @@ operator_arity get_operator_arity(token_type t)
 	case token_type::REMAINDER:
 	case token_type::PLUS:
 	case token_type::MINUS:
+	case token_type::COMMA:
 		return operator_arity::BINARY;
 	
 	default:
@@ -229,7 +251,19 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	}
 	
 	if (not first_operand)
-		exit_with(interpreter_error::OPERANDS_NOT_VALID);
+	{
+		auto err = new interpreter_error(
+			error_id::OPERANDS_NOT_VALID,
+			"The left (first) operand of '" + op->lexeme + "' is not valid."
+		);
+		
+		err->file_name = op->file_name;
+		err->file_path = op->file_path;
+		err->row = op->row;
+		err->column = op->column;
+
+		exit_with(err);
+	}
 
 	// Search the second operand
 	for (size_t i = pos + 1; i < tokens->size(); i++)
@@ -245,10 +279,31 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	}
 
 	if (not second_operand)
-		exit_with(interpreter_error::OPERANDS_NOT_VALID);
+	{
+		auto err = new interpreter_error(
+			error_id::OPERANDS_NOT_VALID,
+			"The right (second) operand of '" + op->lexeme + "' is not valid."
+		);
+		
+		err->file_name = op->file_name;
+		err->file_path = op->file_path;
+		err->row = op->row;
+		err->column = op->column;
+
+		exit_with(err);
+	}
 	
-	if (not are_operands_valid(op->type, first_operand->type, second_operand->type))
-		exit_with(interpreter_error::OPERANDS_NOT_VALID);
+	if (not are_operands_valid(op, first_operand->type, second_operand->type))
+	{
+		auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
+
+		err->file_name = op->file_name;
+		err->file_path = op->file_path;
+		err->row = op->row;
+		err->column = op->column;
+
+		exit_with(err);
+	}
 	
 	auto fop = atoi(first_operand->lexeme.c_str());
 	auto sop = atoi(second_operand->lexeme.c_str());

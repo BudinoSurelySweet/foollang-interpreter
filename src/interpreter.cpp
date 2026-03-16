@@ -12,11 +12,26 @@
 using namespace std;
 
 
-void interpret(string* source_code)
+static void update_position(char* character, size_t* row, size_t* column)
+{
+	if (*character == '\n')
+	{
+		*row += 1;
+		*column = 0;
+	}
+	else
+		*column += 1;
+}
+
+
+void interpret(string* source_code, string file_name, string file_path)
 {
 	vector<token> source_code_tokenized;
 	vector<size_t> operators_indices;
 	vector<size_t> sequence_points_indices;
+	
+	size_t row = 1;
+	size_t column = 0;
 	
 	bool is_token_sequence_point = false;
 	operator_manager* operator_list_creator = new operator_manager;
@@ -24,7 +39,9 @@ void interpret(string* source_code)
 	// Iterate over all the `source_code`
 	for (size_t token_index = -1; char character : *source_code)
 	{
-		optional<token> curr_token = create_token(character);
+		update_position(&character, &row, &column);
+
+		optional<token> curr_token = create_token(character, file_name, file_path, row, column);
 		
 		// Check if the token is available or not
 		if (not curr_token)
