@@ -1,10 +1,16 @@
 #ifndef TOKEN_HPP
 #define TOKEN_HPP
 
+#include <unordered_map>
 #include <optional>
+#include <expected>
 #include <vector>
 #include <string>
+#include <iostream>
+#include <utility>
+#include <set>
 
+#include "error_manager.hpp"
 #include "color.hpp"
 
 #define OPERATORS_LEVELS_OF_PRECEDENCE_NUMBER 14
@@ -59,6 +65,7 @@ enum class token_type
 	TOMBSTONE, // Used by the evaluator
 
 	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
+	PRIMITIVE_TYPE,
 	
 	NUMBERS_H,
 
@@ -71,6 +78,7 @@ enum class token_type
 
 	OPERATOR_H,
 
+		VAR_DECLARATION,
 		MULTIPLICATION,
 		DIVISION,
 		REMAINDER,
@@ -99,12 +107,22 @@ enum class operator_associativity
 };
 
 
+enum class operands_position
+{
+	NONE,
+	LEFT,
+	RIGHT,
+	LEFT_RIGHT,
+	LEFT_LEFT,
+	RIGHT_RIGHT,
+};
+
+
 enum class operator_arity
 {
 	NONE,
 	UNARY,
 	BINARY,
-	TERNARY,
 };
 
 
@@ -133,25 +151,27 @@ char_type get_char_type(char c);
 token_type get_token_type(char_type c);
 
 
+expected<bool, interpreter_error*> are_operands_valid(token* target_operator, token_type right_operand);
+
+
+expected<bool, interpreter_error*> are_operands_valid(token* target_operator, token_type left_operand, token_type right_operand);
+
+
+// TODO Sostituire tutte le funzioni sottostanti con `get_trait`
+operator_arity get_trait(token_type t, unordered_map<token_type, operator_arity> map);
+operands_position get_trait(token_type t, unordered_map<token_type, operands_position> map);
+
+
 int get_operator_precedence(token_type t);
-
-
-bool are_operands_valid(token_type target_operator, token_type first_operand);
-
-
-bool are_operands_valid(token* target_operator, token_type first_operand, token_type second_operand);
-
-
-bool are_operands_valid(token_type target_operator, token_type first_operand, token_type second_operand, token_type third_operand);
 
 
 operator_arity get_operator_associativity(char c);
 
 
+operands_position get_operands_position(token_type t);
+
+
 operator_arity get_operator_arity(token_type t);
-
-
-void evaluate_operands(vector<token>* tokens, token* op, size_t pos);
 
 
 bool is_operator(token_type t);

@@ -31,8 +31,16 @@ public:
 	size_t row;
 	size_t column;
 	
-	interpreter_error(error_id id, string additional_info = "");
+	interpreter_error(
+		error_id id,
+		string additional_info = "",
+		string file_name = "",
+		string file_path = "",
+		size_t row = 0,
+		size_t column = 0
+	);
 	int get_number_id();
+	interpreter_error* set_position(string file_name, string file_path, size_t row, size_t column);
 };
 
 

@@ -5,6 +5,7 @@
 #include "interpreter.hpp"
 #include "token.hpp"
 #include "operator_manager.hpp"
+#include "evaluator.hpp"
 #include "color.hpp"
 
 #include <iostream>
@@ -24,20 +25,22 @@ static void update_position(char* character, size_t* row, size_t* column)
 }
 
 
-void interpret(string* source_code, string file_name, string file_path)
+void interpret(string& source_code, string file_name, string file_path)
 {
+	operator_manager* operator_list_creator = new operator_manager;
+
 	vector<token> source_code_tokenized;
 	vector<size_t> operators_indices;
 	vector<size_t> sequence_points_indices;
 	
 	size_t row = 1;
 	size_t column = 0;
+	size_t token_index = -1;
 	
 	bool is_token_sequence_point = false;
-	operator_manager* operator_list_creator = new operator_manager;
 
 	// Iterate over all the `source_code`
-	for (size_t token_index = -1; char character : *source_code)
+	for (char character : source_code)
 	{
 		update_position(&character, &row, &column);
 
@@ -55,7 +58,8 @@ void interpret(string* source_code, string file_name, string file_path)
 		if (is_operator(curr_token->type))
 			operator_list_creator->add(curr_token->type, token_index);
 
-		if (is_token_sequence_point )
+		// WARNING Quando mi ritrovo all'ultima riga se non c'è un sequence point non la esegue
+		if (is_token_sequence_point)
 		{
 			// Create another expression and update the bookmark (variable that keep track of the current expression)
 			vector<size_t> operators = operator_list_creator->get();

@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 	if (argc < 2)
 	{
 		auto err = new interpreter_error(error_id::FILE_NOT_FOUND);
-
+		
 		exit_with(err);
 	}
 	
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	
 	string source_code = read_file(file_name);
 	
-	interpret(&source_code, file_name, file_path);
+	interpret(source_code, file_name, file_path);
 
 	return 0;
 }

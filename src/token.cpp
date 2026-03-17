@@ -1,8 +1,4 @@
-#include <unordered_map>
-#include <iostream>
-
 #include "token.hpp"
-#include "error_manager.hpp"
 
 using namespace std;
 
@@ -59,6 +55,18 @@ optional<token> create_token(char character, string target_file_name, string tar
 	}
 	else
 	{
+		// HACK Creare un sistema per detectare le keyword
+		if (context == "var")
+			context_type = token_type::VAR_DECLARATION;
+		else if (context == "i8")
+			context_type = token_type::PRIMITIVE_TYPE;
+		else if (context == "i16")
+			context_type = token_type::PRIMITIVE_TYPE;
+		else if (context == "i32")
+			context_type = token_type::PRIMITIVE_TYPE;
+		else if (context == "i64")
+			context_type = token_type::PRIMITIVE_TYPE;
+
 		token t = token(context_type, context, file_name, file_path, row, column);
 		
 		// Resetting static variables
@@ -142,9 +150,104 @@ token_type get_token_type(char_type c)
 }
 
 
+expected<bool, interpreter_error*> are_operands_valid(token* target_operator, token_type right_operand)
+{
+	static auto invalid_operand_err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
+	static auto non_existent_operator_err = new interpreter_error(error_id::NON_EXISTENT_OPERATOR);
+	
+	invalid_operand_err->set_position(
+		target_operator->file_name,
+		target_operator->file_path,
+		target_operator->row,
+		target_operator->column
+	);
+
+	non_existent_operator_err->set_position(
+		target_operator->file_name,
+		target_operator->file_path,
+		target_operator->row,
+		target_operator->column
+	);
+	
+	operator_arity arity = get_operator_arity(target_operator->type);
+
+	if (arity == operator_arity::NONE)
+		return unexpected(invalid_operand_err);
+	
+	switch (target_operator->type)
+	{
+	case token_type::VAR_DECLARATION:
+		if (right_operand == token_type::WORD)
+			return true;
+		
+		return unexpected(invalid_operand_err);
+	
+	default:
+		return unexpected(non_existent_operator_err);
+	}
+
+	return unexpected(invalid_operand_err);
+}
+
+
+expected<bool, interpreter_error*> are_operands_valid(token* target_operator, token_type left_operand, token_type right_operand)
+{
+	static auto invalid_operand_err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
+	static auto non_existent_operator_err = new interpreter_error(error_id::NON_EXISTENT_OPERATOR);
+	
+	invalid_operand_err->set_position(
+		target_operator->file_name,
+		target_operator->file_path,
+		target_operator->row,
+		target_operator->column
+	);
+
+	non_existent_operator_err->set_position(
+		target_operator->file_name,
+		target_operator->file_path,
+		target_operator->row,
+		target_operator->column
+	);
+	
+	operator_arity arity = get_operator_arity(target_operator->type);
+
+	if (arity == operator_arity::NONE)
+		return unexpected(invalid_operand_err);
+
+	bool left_operand_is_number = (
+		left_operand == token_type::I8 or left_operand == token_type::I16
+		or left_operand == token_type::I32 or left_operand == token_type::I64
+	);
+	
+	bool right_operand_is_number = (
+		right_operand == token_type::I8 or right_operand == token_type::I16
+		or right_operand == token_type::I32 or right_operand == token_type::I64
+	);
+
+	switch (target_operator->type)
+	{
+	case token_type::MULTIPLICATION:
+	case token_type::DIVISION:
+	case token_type::PLUS:
+	case token_type::MINUS:
+		// TODO Instead of checking if they are number, I should check if they are rvalue/lvalue
+		if (left_operand_is_number and right_operand_is_number)
+			return true;
+		
+		return unexpected(invalid_operand_err);
+	
+	default:
+		return unexpected(non_existent_operator_err);
+	}
+
+	return unexpected(invalid_operand_err);
+}
+
+
 int get_operator_precedence(token_type t)
 {
 	static const unordered_map<token_type, int> operator_precedence = {
+		{ token_type::VAR_DECLARATION, 1 },
 		{ token_type::MULTIPLICATION, 3 },
 		{ token_type::DIVISION, 3 },
 		{ token_type::REMAINDER, 3 },
@@ -162,187 +265,53 @@ int get_operator_precedence(token_type t)
 	return -1;
 }
 
-
-bool are_operands_valid(token* target_operator, token_type first_operand, token_type second_operand)
+operands_position get_operands_position(token_type t)
 {
-	operator_arity arity = get_operator_arity(target_operator->type);
+	static const unordered_map<token_type, operands_position> positions = {
+		{ token_type::VAR_DECLARATION, operands_position::RIGHT_RIGHT },
+		{ token_type::MULTIPLICATION, operands_position::LEFT_RIGHT },
+		{ token_type::DIVISION, operands_position::LEFT_RIGHT },
+		{ token_type::REMAINDER, operands_position::LEFT_RIGHT },
+		{ token_type::PLUS, operands_position::LEFT_RIGHT },
+		{ token_type::MINUS, operands_position::LEFT_RIGHT },
+		{ token_type::ASSIGNMENT, operands_position::LEFT_RIGHT },
+		{ token_type::COMMA, operands_position::LEFT_RIGHT },
+	};
+
+	if (not is_operator(t))
+		return operands_position::NONE;
 	
-	if (arity == operator_arity::NONE)
-		return false;
-
-	bool first_operand_is_number = (
-		first_operand == token_type::I8 or first_operand == token_type::I16
-		or first_operand == token_type::I32 or first_operand == token_type::I64
-	);
+	auto tuple = positions.find(t);
 	
-	bool second_operand_is_number = (
-		second_operand == token_type::I8 or second_operand == token_type::I16
-		or second_operand == token_type::I32 or second_operand == token_type::I64
-	);
-
-	switch (target_operator->type)
-	{
-	case token_type::MULTIPLICATION:
-	case token_type::DIVISION:
-	case token_type::PLUS:
-	case token_type::MINUS:
-		if (first_operand_is_number and second_operand_is_number)
-			return true;
-		
-		return false;
+	if (tuple != positions.end())
+		return tuple->second;
 	
-	default:
-		auto err = new interpreter_error(error_id::NON_EXISTENT_OPERATOR);
-
-		err->file_name = target_operator->file_name;
-		err->file_path = target_operator->file_path;
-		err->row = target_operator->row;
-		err->column = target_operator->column;
-
-		exit_with(err);
-	}
-
-	return false;
+	return operands_position::NONE;
 }
 
 
 operator_arity get_operator_arity(token_type t)
 {
+	static const unordered_map<token_type, operator_arity> arities = {
+		{ token_type::VAR_DECLARATION, operator_arity::BINARY },
+		{ token_type::MULTIPLICATION, operator_arity::BINARY },
+		{ token_type::DIVISION, operator_arity::BINARY },
+		{ token_type::REMAINDER, operator_arity::BINARY },
+		{ token_type::PLUS, operator_arity::BINARY },
+		{ token_type::MINUS, operator_arity::BINARY },
+		{ token_type::ASSIGNMENT, operator_arity::BINARY },
+		{ token_type::COMMA, operator_arity::BINARY },
+	};
+
 	if (not is_operator(t))
 		return operator_arity::NONE;
 	
-	switch (t)
-	{
-	case token_type::MULTIPLICATION:
-	case token_type::DIVISION:
-	case token_type::REMAINDER:
-	case token_type::PLUS:
-	case token_type::MINUS:
-	case token_type::COMMA:
-		return operator_arity::BINARY;
+	auto tuple = arities.find(t);
 	
-	default:
-		break;
-	}
+	if (tuple != arities.end())
+		return tuple->second;
 	
 	return operator_arity::NONE;
-}
-
-
-void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
-{
-	// TODO Create integer promotion
-	// ...
-	
-	token* first_operand = nullptr;
-	token* second_operand = nullptr;
-
-	// Search the first operand
-	for (int i = static_cast<int>(pos) - 1; i >= 0; i--)
-	{
-		token& operand = (*tokens)[i];
-
-		if (operand.type != token_type::TOMBSTONE)
-		{
-			first_operand = &operand;
-
-			break;
-		}
-	}
-	
-	if (not first_operand)
-	{
-		auto err = new interpreter_error(
-			error_id::OPERANDS_NOT_VALID,
-			"The left (first) operand of '" + op->lexeme + "' is not valid."
-		);
-		
-		err->file_name = op->file_name;
-		err->file_path = op->file_path;
-		err->row = op->row;
-		err->column = op->column;
-
-		exit_with(err);
-	}
-
-	// Search the second operand
-	for (size_t i = pos + 1; i < tokens->size(); i++)
-	{
-		token& operand = (*tokens)[i];
-
-		if (operand.type != token_type::TOMBSTONE)
-		{
-			second_operand = &operand;
-
-			break;
-		}
-	}
-
-	if (not second_operand)
-	{
-		auto err = new interpreter_error(
-			error_id::OPERANDS_NOT_VALID,
-			"The right (second) operand of '" + op->lexeme + "' is not valid."
-		);
-		
-		err->file_name = op->file_name;
-		err->file_path = op->file_path;
-		err->row = op->row;
-		err->column = op->column;
-
-		exit_with(err);
-	}
-	
-	if (not are_operands_valid(op, first_operand->type, second_operand->type))
-	{
-		auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
-
-		err->file_name = op->file_name;
-		err->file_path = op->file_path;
-		err->row = op->row;
-		err->column = op->column;
-
-		exit_with(err);
-	}
-	
-	auto fop = atoi(first_operand->lexeme.c_str());
-	auto sop = atoi(second_operand->lexeme.c_str());
-
-	switch (op->type)
-	{
-	case token_type::PLUS:
-		op->lexeme = to_string(fop + sop);
-		op->type = token_type::I32;
-
-		break;
-	
-	case token_type::MINUS:
-		op->lexeme = to_string(fop - sop);
-		op->type = token_type::I32;
-		
-		break;
-
-	case token_type::MULTIPLICATION:
-		op->lexeme = to_string(fop * sop);
-		op->type = token_type::I32;
-		
-		break;
-
-	case token_type::DIVISION:
-		op->lexeme = to_string(fop / sop);
-		op->type = token_type::I32;
-		
-		break;
-	
-	default:
-		break;
-	}
-
-	first_operand->lexeme.clear();
-	first_operand->type = token_type::TOMBSTONE;
-
-	second_operand->lexeme.clear();
-	second_operand->type = token_type::TOMBSTONE;
 }
 
 
@@ -355,33 +324,17 @@ bool is_operator(token_type t)
 }
 
 
+// TODO Sostituire i due parametri così che siano coerenti con il nome della funzione: can char -> to token
 bool can_char_be_in_token(token_type t, char_type c)
 {
-	if (c == char_type::NUMBER)
-		switch (t)
-		{
-		case token_type::I8:
-		case token_type::I16:
-		case token_type::I32:
-		case token_type::I64:
-			return true;
-		
-		default:
-			return false;
-		}
-
-	if (t == token_type::WORD)
-		switch (c)
-		{
-		case char_type::LETTER:
-		case char_type::NUMBER:
-			return true;
-		
-		default:
-			return false;
-		}
+	static const set<pair<char_type, token_type>> token_to_char = {
+		{ char_type::NUMBER, token_type::I8 },
+		{ char_type::NUMBER, token_type::I16 },
+		{ char_type::NUMBER, token_type::I32 },
+		{ char_type::NUMBER, token_type::I64 },
+		{ char_type::LETTER, token_type::WORD },
+		{ char_type::NUMBER, token_type::WORD },
+	};
 	
-	// Insert other cases here
-
-	return false;
+	return token_to_char.contains({c, t});
 }

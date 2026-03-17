@@ -7,7 +7,7 @@
 using namespace std;
 
 
-interpreter_error::interpreter_error(error_id id, string additional_info)
+interpreter_error::interpreter_error(error_id id, string additional_info, string file_name, string file_path, size_t row, size_t column)
 {
 	static const string err_prefix = "[Error]";
 	static const string info_prefix = "[Additional informations]";
@@ -24,12 +24,28 @@ interpreter_error::interpreter_error(error_id id, string additional_info)
 	
 	if (not additional_info.empty())
 		info = info_prefix + " " + additional_info;
+	
+	this->file_name = file_name;
+	this->file_path = file_path;
+	this->row = row;
+	this->column = column;
 }
 
 
 int interpreter_error::get_number_id()
 {
 	return static_cast<int>(id);
+}
+
+
+interpreter_error* interpreter_error::set_position(string file_name, string file_path, size_t row, size_t column)
+{
+	this->file_name = file_name;
+	this->file_path = file_path;
+	this->row = row;
+	this->column = column;
+	
+	return this;
 }
 
 
