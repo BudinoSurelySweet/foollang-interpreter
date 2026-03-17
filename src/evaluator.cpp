@@ -1,6 +1,17 @@
 #include "evaluator.hpp"
 
 
+operands_group::operands_group(token* leftmost, token* left, token* right, token* rightmost)
+{
+	this->leftmost = leftmost;
+	this->left = left;
+	this->right = right;
+	this->rightmost = rightmost;
+}
+
+
+#pragma region Finders
+
 static pair<token*, token*> find_left_operands(vector<token>* list, size_t start_pos)
 {
 	pair<token*, token*> result = {nullptr, nullptr};
@@ -50,38 +61,124 @@ static pair<token*, token*> find_right_operands(vector<token>* list, size_t star
 	return result;
 }
 
+#pragma endregion
+
 
 #pragma region Operations Behavior
 
-static void addition_behavior(token* op, token* left_operand, token* right_operand)
+static void addition_behavior(token* op, operands_group* operands)
 {
 	op->type = token_type::I32;
 	
 	// HACK Sistemare questa parte, non è ottimizzata
-	if (left_operand->type == token_type::WORD)
+	if (operands->left->type == token_type::WORD)
 	{
 		visit(
-			[op, right_operand](auto &value)
+			[op, operands](auto &value)
 			{
-				op->lexeme = to_string(value + atoi(right_operand->lexeme.c_str()));
+				op->lexeme = to_string(value + atoi(operands->right->lexeme.c_str()));
 			},
-			variables_32bit.at(left_operand->lexeme)
+			variables_32bit.at(operands->left->lexeme)
 		);
 	}
 	else
 	{
 		op->lexeme = to_string(
-			atoi(left_operand->lexeme.c_str()) 
-			+ atoi(right_operand->lexeme.c_str())
+			atoi(operands->left->lexeme.c_str()) 
+			+ atoi(operands->right->lexeme.c_str())
 		);
 	}
 }
+
+
+static void subtraction_behavior(token* op, operands_group* operands)
+{
+	op->type = token_type::I32;
+	op->lexeme = to_string(
+		atoi(operands->left->lexeme.c_str())
+		- atoi(operands->right->lexeme.c_str())
+	);
+}
+
+
+static void multiplication_behavior(token* op, operands_group* operands)
+{
+	op->type = token_type::I32;
+	op->lexeme = to_string(
+		atoi(operands->left->lexeme.c_str())
+		* atoi(operands->right->lexeme.c_str())
+	);
+}
+
+
+static void division_behavior(token* op, operands_group* operands)
+{
+	op->type = token_type::I32;
+	op->lexeme = to_string(
+		atoi(operands->left->lexeme.c_str())
+		/ atoi(operands->right->lexeme.c_str())
+	);
+}
+
+
+static void var_declaration_behavior(token* op, operands_group* operands)
+{
+	static auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
+
+	err->set_position(
+		op->file_name,
+		op->file_path,
+		op->row,
+		op->column
+	);
+
+	if (operands->right->type != token_type::WORD)
+		exit_with(err);
+	
+	if (operands->rightmost->type != token_type::PRIMITIVE_TYPE)
+		exit_with(err);
+	
+	// TODO Add other types
+	if (operands->rightmost->lexeme == "i32")
+		variables_32bit.insert({operands->right->lexeme, static_cast<int>(0)});
+
+	op->type = operands->right->type;
+	op->lexeme = operands->right->lexeme;
+}
+
+
+static void assignment_behavior(token* op, operands_group* operands)
+{
+	// HACK Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
+	// HACK Find a way to check where the variable is stored
+	variables_32bit.at(operands->left->lexeme) = atoi(operands->right->lexeme.c_str());
+	
+	op->type = operands->right->type;
+	
+	visit(
+		[op](auto &value123)
+		{
+			op->lexeme = to_string(value123);
+		},
+		variables_32bit.at(operands->left->lexeme)
+	);
+}
+
 
 #pragma endregion
 
 
 void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 {
+	static const unordered_map<token_type, function<void(token*, operands_group*)>> operators_behaviors = {
+		{ token_type::PLUS, addition_behavior },
+		{ token_type::MINUS, subtraction_behavior },
+		{ token_type::MULTIPLICATION, multiplication_behavior },
+		{ token_type::DIVISION, division_behavior },
+		{ token_type::VAR_DECLARATION, var_declaration_behavior },
+		{ token_type::ASSIGNMENT, assignment_behavior },
+	};
+
 	static auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
 
 	auto [left_operand, leftmost_operand] = find_left_operands(tokens, pos);
@@ -120,117 +217,35 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	)
 		exit_with(err);
 
-	// TODO Create integer promotion
-	// ...
+	operands_group* operands = new operands_group(leftmost_operand, left_operand, right_operand, rightmost_operand);
 
-	// ----------------------------------------------------------------------------------------------------
+	// TODO Create integer promotion
 
 	// TODO Check if the operands are the intended types
+
+	auto behavior = operators_behaviors.find(op->type);
 	
-	// TODO Spostare la logica degli operatori dentro una funzione designata per quel comportamento
-	switch (op->type)
-	{
-	case token_type::PLUS:
-		addition_behavior(op, left_operand, right_operand);
+	if (behavior != operators_behaviors.end())
+		behavior->second(op, operands);
 
-		break;
-	
-	case token_type::MINUS:
-		op->type = token_type::I32;
-		op->lexeme = to_string(
-			atoi(left_operand->lexeme.c_str())
-			- atoi(right_operand->lexeme.c_str())
-		);
-		
-		break;
-
-	case token_type::MULTIPLICATION:
-		op->type = token_type::I32;
-		op->lexeme = to_string(
-			atoi(left_operand->lexeme.c_str())
-			* atoi(right_operand->lexeme.c_str())
-		);
-		
-		break;
-
-	case token_type::DIVISION:
-		op->type = token_type::I32;
-		op->lexeme = to_string(
-			atoi(left_operand->lexeme.c_str())
-			/ atoi(right_operand->lexeme.c_str())
-		);
-		
-		break;
-	
-	case token_type::VAR_DECLARATION:
-		if (right_operand->type != token_type::WORD)
-			exit_with(err);
-		
-		if (rightmost_operand->type != token_type::PRIMITIVE_TYPE)
-			exit_with(err);
-		
-		// TODO Add other types
-		if (rightmost_operand->lexeme == "i32")
-			variables_32bit.insert({right_operand->lexeme, static_cast<int>(0)});
-
-		op->type = right_operand->type;
-		op->lexeme = right_operand->lexeme;
-
-		break;
-		
-	case token_type::ASSIGNMENT:
-		// HACK Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
-		// HACK Find a way to check where the variable is stored
-		variables_32bit.at(left_operand->lexeme) = atoi(right_operand->lexeme.c_str());
-		
-		op->type = right_operand->type;
-		
-		visit(
-			[op](auto &value123)
-			{
-				op->lexeme = to_string(value123);
-			},
-			variables_32bit.at(left_operand->lexeme)
-		);
-
-		break;
-	
-	default:
-		break;
-	}
-
-	// Delete involved operands
+	// Kill involved operands
 	if (
 		intended_pos == operands_position::LEFT
 		or intended_pos == operands_position::LEFT_LEFT
 		or intended_pos == operands_position::LEFT_RIGHT
 	)
-	{
-		left_operand->lexeme.clear();
-		left_operand->type = token_type::TOMBSTONE;
-	}
+		left_operand->become_tombstone();
 
 	if (
 		intended_pos == operands_position::RIGHT
 		or intended_pos == operands_position::RIGHT_RIGHT
 		or intended_pos == operands_position::LEFT_RIGHT
 	)
-	{
-		right_operand->lexeme.clear();
-		right_operand->type = token_type::TOMBSTONE;
-	}
+		right_operand->become_tombstone();
 	
 	if (intended_pos == operands_position::LEFT_LEFT)
-	{
-		leftmost_operand->lexeme.clear();
-		leftmost_operand->type = token_type::TOMBSTONE;
-	}
+		leftmost_operand->become_tombstone();
 
 	if (intended_pos == operands_position::RIGHT_RIGHT)
-	{
-		rightmost_operand->lexeme.clear();
-		rightmost_operand->type = token_type::TOMBSTONE;
-	}
+		rightmost_operand->become_tombstone();
 }
-
-

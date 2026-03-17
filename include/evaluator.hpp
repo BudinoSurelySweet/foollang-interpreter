@@ -5,11 +5,23 @@
 #include <expected>
 #include <unordered_map>
 #include <variant>
+#include <functional>
 
 #include "token.hpp"
 #include "error_manager.hpp"
 
 using namespace std;
+
+
+struct operands_group
+{
+	token* leftmost;
+	token* left;
+	token* right;
+	token* rightmost;
+	
+	operands_group(token* leftmost, token* left, token* right, token* rightmost);
+};
 
 
 inline auto variables_1bit = unordered_map<string, bool>();
