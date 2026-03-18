@@ -1,4 +1,6 @@
 #include "evaluator.hpp"
+#include "token.hpp"
+#include <memory>
 
 
 operands_group::operands_group(token* leftmost, token* left, token* right, token* rightmost)
@@ -66,11 +68,11 @@ static pair<token*, token*> find_right_operands(vector<token>* list, size_t star
 
 #pragma region Operations Behavior
 
-static void addition_behavior(token* op, operands_group* operands)
+static void addition_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	op->type = token_type::I32;
 	
-	// HACK Sistemare questa parte, non è ottimizzata
+	// HACK: Sistemare questa parte, non è ottimizzata
 	if (operands->left->type == token_type::WORD)
 	{
 		visit(
@@ -91,7 +93,7 @@ static void addition_behavior(token* op, operands_group* operands)
 }
 
 
-static void subtraction_behavior(token* op, operands_group* operands)
+static void subtraction_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	op->type = token_type::I32;
 	op->lexeme = to_string(
@@ -101,7 +103,7 @@ static void subtraction_behavior(token* op, operands_group* operands)
 }
 
 
-static void multiplication_behavior(token* op, operands_group* operands)
+static void multiplication_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	op->type = token_type::I32;
 	op->lexeme = to_string(
@@ -111,7 +113,7 @@ static void multiplication_behavior(token* op, operands_group* operands)
 }
 
 
-static void division_behavior(token* op, operands_group* operands)
+static void division_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	op->type = token_type::I32;
 	op->lexeme = to_string(
@@ -121,7 +123,7 @@ static void division_behavior(token* op, operands_group* operands)
 }
 
 
-static void var_declaration_behavior(token* op, operands_group* operands)
+static void var_declaration_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	static auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
 
@@ -138,7 +140,7 @@ static void var_declaration_behavior(token* op, operands_group* operands)
 	if (operands->rightmost->type != token_type::PRIMITIVE_TYPE)
 		exit_with(err);
 	
-	// TODO Add other types
+	// TODO: Add other types
 	if (operands->rightmost->lexeme == "i32")
 		variables_32bit.insert({operands->right->lexeme, static_cast<int>(0)});
 
@@ -147,10 +149,10 @@ static void var_declaration_behavior(token* op, operands_group* operands)
 }
 
 
-static void assignment_behavior(token* op, operands_group* operands)
+static void assignment_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	// HACK Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
-	// HACK Find a way to check where the variable is stored
+	// HACK: Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
+	// HACK: Find a way to check where the variable is stored
 	variables_32bit.at(operands->left->lexeme) = atoi(operands->right->lexeme.c_str());
 	
 	op->type = operands->right->type;
@@ -170,7 +172,7 @@ static void assignment_behavior(token* op, operands_group* operands)
 
 void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 {
-	static const unordered_map<token_type, function<void(token*, operands_group*)>> operators_behaviors = {
+	static const unordered_map<token_type, function<void(token*, shared_ptr<operands_group>)>> operators_behaviors = {
 		{ token_type::PLUS, addition_behavior },
 		{ token_type::MINUS, subtraction_behavior },
 		{ token_type::MULTIPLICATION, multiplication_behavior },
@@ -217,11 +219,11 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	)
 		exit_with(err);
 
-	operands_group* operands = new operands_group(leftmost_operand, left_operand, right_operand, rightmost_operand);
+	shared_ptr<operands_group> operands = make_shared<operands_group>(leftmost_operand, left_operand, right_operand, rightmost_operand);
 
-	// TODO Create integer promotion
+	// TODO: Create integer promotion
 
-	// TODO Check if the operands are the intended types
+	// TODO: Check if the operands are the intended types
 
 	auto behavior = operators_behaviors.find(op->type);
 	

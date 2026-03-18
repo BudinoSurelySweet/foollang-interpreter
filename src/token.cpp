@@ -62,7 +62,7 @@ optional<token> create_token(char character, string target_file_name, string tar
 	}
 	else
 	{
-		// HACK Creare un sistema per detectare le keyword
+		// HACK: Creare un sistema per detectare le keyword
 		if (context == "var")
 			context_type = token_type::VAR_DECLARATION;
 		else if (context == "i8")
@@ -149,6 +149,13 @@ operator_arity get_operator_arity(token_type t)
 		return tuple->second;
 	
 	return operator_arity::NONE;
+}
+
+
+// FIX: Implementare questa funzione aggiungendo anche la sua hasmap
+value_access_type get_value_access_type(token_type t)
+{
+	
 }
 
 

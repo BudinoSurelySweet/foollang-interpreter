@@ -81,6 +81,6 @@ void exit_with(interpreter_error* err)
 	
 	delete err;
 
-	// BUG It shows a "random" number, not the intended one
+	// BUG: It shows a "random" number, not the intended one
 	exit(exit_number);
 }

@@ -14,8 +14,8 @@ First of all, you need to build the project. After that you can bring the binari
 
 ## How can I build this interpreter?
 
-// TODO Put a guide on how to build this project
+// TODO: Put a guide on how to build this project
 
 ## Language design
 
-// TODO Put a tutorial about how the language work
+// TODO: Put a tutorial about how the language work

@@ -6,7 +6,6 @@
 
 #include "interpreter.hpp"
 #include "error_manager.hpp"
-#include "color.hpp"
 
 using namespace std;
 
@@ -35,7 +34,7 @@ static string read_file(string file_path)
 
 int main(int argc, char** argv)
 {
-	// TODO Fare un sistema di argomenti migliore
+	// TODO: Fare un sistema di argomenti migliore
 	if (argc < 2)
 	{
 		auto err = new interpreter_error(error_id::FILE_NOT_FOUND);

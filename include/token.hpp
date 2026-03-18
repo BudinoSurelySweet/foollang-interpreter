@@ -22,9 +22,9 @@ enum class char_type
 {
 	NONE,
 	
-	// TODO Aggiungere il supporto per i caratteri da 0 a 31 (saranno da ignorare nella fase di lexing) + 32 (cioè lo spazio)
+	// TODO: Aggiungere il supporto per i caratteri da 0 a 31 (saranno da ignorare nella fase di lexing) + 32 (cioè lo spazio)
 	
-	// TODO Altri carateri saranno da gestire con errori (unexpected_token)
+	// TODO: Altri carateri saranno da gestire con errori (unexpected_token)
 
 	SPACE = ' ',
 
@@ -118,13 +118,21 @@ enum class operator_arity
 };
 
 
+enum class value_access_type
+{
+	NONE,
+	INDIRECT_VALUE, // Variables or container of data (need to be "extracted")
+	DIRECT_VALUE, // Pure value, primitive data like int32_t (can be used right away)
+};
+
+
 class token
 {
 public:
 	token_type type;
 	string lexeme;
 	
-	// HACK Storing strings directly inside tokens for now. Since strings allocate their buffer on the heap, 1 million tokens on the stack results in 2 million heap allocations.	string file_name;
+	// HACK: Storing strings directly inside tokens for now. Since strings allocate their buffer on the heap, 1 million tokens on the stack results in 2 million heap allocations.	string file_name;
 	string file_name;
 	string file_path;
 	size_t row;
@@ -277,6 +285,9 @@ operands_position get_operands_position(token_type t);
 
 
 operator_arity get_operator_arity(token_type t);
+
+
+value_access_type get_value_access_type(token_type t);
 
 
 bool is_operator(token_type t);

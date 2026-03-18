@@ -58,7 +58,7 @@ void interpret(string& source_code, string file_name, string file_path)
 		if (is_operator(curr_token->type))
 			operator_list_creator->add(curr_token->type, token_index);
 
-		// WARNING Quando mi ritrovo all'ultima riga se non c'è un sequence point non la esegue
+		// WARNING: Quando mi ritrovo all'ultima riga se non c'è un sequence point non la esegue
 		if (is_token_sequence_point)
 		{
 			// Create another expression and update the bookmark (variable that keep track of the current expression)
