@@ -1,4 +1,5 @@
 #include "evaluator.hpp"
+#include "error_manager.hpp"
 #include "token.hpp"
 #include <memory>
 #include <string>
@@ -15,6 +16,10 @@ operands_group::operands_group(token* leftmost, token* left, token* right, token
 
 static void unpack_variable(token* t)
 {
+	static auto err = new interpreter_error(error_id::NON_EXISTENT_VARIABLE);
+
+	err->set_position(t->file_name, t->file_path, t->row, t->column);
+
 	auto candidate_8bit = variables_8bit.find(t->lexeme);
 
 	if (candidate_8bit != variables_8bit.end())
@@ -61,7 +66,7 @@ static void unpack_variable(token* t)
 		return;
 	}
 
-	// FIX: Push an error because the variable `t` doesn't exists
+	exit_with(err);
 }
 
 
@@ -215,7 +220,7 @@ static void var_declaration_behavior(token* op, shared_ptr<operands_group> opera
 	if (operands->right->type != token_type::WORD)
 		exit_with(err);
 
-	if (operands->rightmost->type != token_type::PRIMITIVE_TYPE)
+	if (operands->rightmost->type != token_type::PRIMITIVE_LANG_TYPE)
 		exit_with(err);
 
 	// TODO: Add other types

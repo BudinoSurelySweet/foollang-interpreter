@@ -3,6 +3,10 @@
 
 #include <cstdio>
 #include <string>
+#include <iostream>
+#include <unordered_map>
+
+#include "color.hpp"
 
 using namespace std;
 
@@ -18,6 +22,9 @@ enum class error_id
 	// Operators
 	OPERANDS_NOT_VALID,
 	NON_EXISTENT_OPERATOR,
+
+	// Variables
+	NON_EXISTENT_VARIABLE,
 };
 
 
@@ -42,6 +49,16 @@ public:
 	);
 	int get_number_id();
 	interpreter_error* set_position(string& file_name, string& file_path, size_t row, size_t column);
+};
+
+
+const string ERROR_PREFIX = "[Error]";
+const string INFO_PREFIX = "[Additional informations]";
+const unordered_map<error_id, string> DEFAULT_ERROR_MESSAGE = {
+	{ error_id::FILE_NOT_FOUND, "File not found" },
+	{ error_id::OPERANDS_NOT_VALID, "One or more operands are not valid" },
+	{ error_id::NON_EXISTENT_OPERATOR, "Non existent or implemented operator" },
+		{ error_id::NON_EXISTENT_VARIABLE, "Non existent variable" },
 };
 
 

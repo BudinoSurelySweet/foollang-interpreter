@@ -65,14 +65,9 @@ optional<token> create_token(char character, string target_file_name, string tar
 		// HACK: Creare un sistema per detectare le keyword
 		if (context == "var")
 			context_type = token_type::VAR_DECLARATION;
-		else if (context == "i8")
-			context_type = token_type::PRIMITIVE_TYPE;
-		else if (context == "i16")
-			context_type = token_type::PRIMITIVE_TYPE;
-		else if (context == "i32")
-			context_type = token_type::PRIMITIVE_TYPE;
-		else if (context == "i64")
-			context_type = token_type::PRIMITIVE_TYPE;
+
+		if (is_primitive_lang_type(context))
+			context_type = token_type::PRIMITIVE_LANG_TYPE;
 
 		token t = token(context_type, context, file_name, file_path, row, column);
 		
@@ -172,7 +167,19 @@ bool is_operator(token_type t)
 }
 
 
+bool is_primitive_lang_type(string t)
+{
+	auto tuple = PRIMITIVE_LANG_TYPE_KEYWORDS.find(t);
+
+	if (tuple != PRIMITIVE_LANG_TYPE_KEYWORDS.end())
+		return true;
+
+	return false;
+}
+
+
 bool can_char_be_in_token(char_type c, token_type t)
 {
 	return CHAR_TOKEN_AVAILABLE_PAIRS.contains({c, t});
 }
+

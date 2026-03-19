@@ -1,29 +1,17 @@
-#include <iostream>
-#include <unordered_map>
-
 #include "error_manager.hpp"
-#include "color.hpp"
 
 using namespace std;
 
 
 interpreter_error::interpreter_error(error_id id, string additional_info, string file_name, string file_path, size_t row, size_t column)
 {
-	static const string err_prefix = "[Error]";
-	static const string info_prefix = "[Additional informations]";
-	static const unordered_map<error_id, string> default_message = {
-		{ error_id::FILE_NOT_FOUND, "File not found" },
-		{ error_id::OPERANDS_NOT_VALID, "One or more operands are not valid" },
-		{ error_id::NON_EXISTENT_OPERATOR, "Non existent or implemented operator" },
-	};
-
-	auto tuple = default_message.find(id);
+	auto tuple = DEFAULT_ERROR_MESSAGE.find(id);
 	
-	if (tuple != default_message.end())
-		message = err_prefix + " " + tuple->second;
+	if (tuple != DEFAULT_ERROR_MESSAGE.end())
+		message = ERROR_PREFIX + " " + tuple->second;
 	
 	if (not additional_info.empty())
-		info = info_prefix + " " + additional_info;
+		info = INFO_PREFIX + " " + additional_info;
 	
 	this->file_name = file_name;
 	this->file_path = file_path;

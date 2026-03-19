@@ -36,13 +36,28 @@ void interpret(string& source_code, string file_name, string file_path)
 	size_t row = 1;
 	size_t column = 0;
 	size_t token_index = -1;
+	size_t char_index = -1;
 	
-	bool is_token_sequence_point = false;
+	bool comment_mode = false;
 
 	// Iterate over all the `source_code`
 	for (char character : source_code)
 	{
+		char_index++;
+
 		update_position(&character, &row, &column);
+
+		// End comment mode
+		if (comment_mode and character == '\n')
+			comment_mode = false;
+
+		// Start comment mode
+		if (character == '/' and source_code[char_index + 1] == '/')
+			comment_mode = true;
+
+		// Skip characters/tokens during comment mode
+		if (comment_mode)
+			continue;
 
 		optional<token> curr_token = create_token(character, file_name, file_path, row, column);
 		
@@ -50,16 +65,17 @@ void interpret(string& source_code, string file_name, string file_path)
 		if (not curr_token)
 			continue;
 		
-		is_token_sequence_point = curr_token->type == token_type::SEQUENCE_POINT;
-		token_index++;
-		
 		source_code_tokenized.push_back(*curr_token);
+
+		token_index++;
 		
 		if (is_operator(curr_token->type))
 			operator_list_creator->add(curr_token->type, token_index);
 
 		// WARNING: Quando mi ritrovo all'ultima riga se non c'è un sequence point non la esegue
-		if (is_token_sequence_point)
+
+		// Check if the token is a sequence point
+		if (curr_token->type == token_type::SEQUENCE_POINT)
 		{
 			// Create another expression and update the bookmark (variable that keep track of the current expression)
 			vector<size_t> operators = operator_list_creator->get();

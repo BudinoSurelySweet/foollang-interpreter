@@ -65,14 +65,22 @@ enum class token_type
 	TOMBSTONE, // Used by the evaluator
 
 	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
-	PRIMITIVE_TYPE,
+	PRIMITIVE_LANG_TYPE, // Every keyword that refer to a type: i32, u64, f32
 	
 	NUMBERS_H,
 
-		I8, // 8 bit - 1 bytes
-		I16, // 16 bit - 2 bytes
-		I32, // 32 bit - 4 bytes
-		I64, // 64 bit - 8 bytes
+		I8, // Integer 8 bit - 1 bytes
+		I16, // Integer 16 bit - 2 bytes
+		I32, // Integer 32 bit - 4 bytes
+		I64, // Integer 64 bit - 8 bytes
+
+		U8, // Unsigned integer 8 bit - 1 bytes
+		U16, // Unsigned integer 16 bit - 2 bytes
+		U32, // Unsigned integer 32 bit - 4 bytes
+		U64, // Unsigned integer 64 bit - 8 bytes
+
+		F32, // Float 32 bit - 4 bytes
+		F64, // Float 64 bit - 8 bytes
 
 	END_NUMBERS_H,
 
@@ -273,6 +281,22 @@ static const set<pair<char_type, token_type>> CHAR_TOKEN_AVAILABLE_PAIRS = {
 	{ char_type::NUMBER, token_type::WORD },
 };
 
+
+static const set<string> PRIMITIVE_LANG_TYPE_KEYWORDS = {
+	"i8", 
+	"i16", 
+	"i32", 
+	"i64", 
+
+	"u8", 
+	"u16", 
+	"u32", 
+	"u64", 
+
+	"f32", 
+	"f64", 
+};
+
 #pragma endregion
 
 
@@ -300,6 +324,9 @@ value_access_type get_value_access_type(token_type t);
 
 
 bool is_operator(token_type t);
+
+
+bool is_primitive_lang_type(string t);
 
 
 bool can_char_be_in_token(char_type c, token_type t);
