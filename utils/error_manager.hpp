@@ -1,6 +1,7 @@
 #ifndef ERROR_MANAGER_HPP
 #define ERROR_MANAGER_HPP 
 
+#include <cstdio>
 #include <string>
 
 using namespace std;
@@ -40,7 +41,7 @@ public:
 		size_t column = 0
 	);
 	int get_number_id();
-	interpreter_error* set_position(string file_name, string file_path, size_t row, size_t column);
+	interpreter_error* set_position(string& file_name, string& file_path, size_t row, size_t column);
 };
 
 

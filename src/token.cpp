@@ -152,10 +152,14 @@ operator_arity get_operator_arity(token_type t)
 }
 
 
-// FIX: Implementare questa funzione aggiungendo anche la sua hasmap
 value_access_type get_value_access_type(token_type t)
 {
-	
+	auto tuple = VALUE_ACCESS_TYPE_MAP.find(t);
+
+	if (tuple != VALUE_ACCESS_TYPE_MAP.end())
+		return tuple->second;
+
+	return value_access_type::NONE;
 }
 
 

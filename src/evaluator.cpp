@@ -1,6 +1,7 @@
 #include "evaluator.hpp"
 #include "token.hpp"
 #include <memory>
+#include <string>
 
 
 operands_group::operands_group(token* leftmost, token* left, token* right, token* rightmost)
@@ -9,6 +10,58 @@ operands_group::operands_group(token* leftmost, token* left, token* right, token
 	this->left = left;
 	this->right = right;
 	this->rightmost = rightmost;
+}
+
+
+static void unpack_variable(token* t)
+{
+	auto candidate_8bit = variables_8bit.find(t->lexeme);
+
+	if (candidate_8bit != variables_8bit.end())
+	{
+		// TODO: Non ancora implementato
+		
+		return;
+	}
+
+	auto candidate_16bit = variables_16bit.find(t->lexeme);
+
+	if (candidate_16bit != variables_16bit.end())
+	{
+		// TODO: Non ancora implementato
+
+		return;
+	}
+
+	auto candidate_32bit = variables_32bit.find(t->lexeme);
+
+	if (candidate_32bit != variables_32bit.end())
+	{
+		auto visitor = [t](auto &value)
+		{
+			t->lexeme = to_string(value);
+
+			if (typeid(value) == typeid(int))
+				t->type = token_type::I32;
+			else if (typeid(value) == typeid(unsigned int)) {} // TODO: Non ancora implementato
+			else if (typeid(value) == typeid(float)) {} // TODO: Non ancora implementato
+		};
+
+		visit(visitor, variables_32bit.at(t->lexeme));
+
+		return;
+	}
+
+	auto candidate_64bit = variables_64bit.find(t->lexeme);
+
+	if (candidate_64bit != variables_64bit.end())
+	{
+		// TODO: Non ancora implementato
+		
+		return;
+	}
+
+	// FIX: Push an error because the variable `t` doesn't exists
 }
 
 
@@ -34,7 +87,7 @@ static pair<token*, token*> find_left_operands(vector<token>* list, size_t start
 			}
 		}
 	}
-	
+
 	return result;
 }
 
@@ -42,7 +95,7 @@ static pair<token*, token*> find_left_operands(vector<token>* list, size_t start
 static pair<token*, token*> find_right_operands(vector<token>* list, size_t start_pos)
 {
 	pair<token*, token*> result = {nullptr, nullptr};
-	
+
 	for (size_t i = start_pos + 1; i < list->size(); i++)
 	{
 		token& operand = (*list)[i];
@@ -70,56 +123,81 @@ static pair<token*, token*> find_right_operands(vector<token>* list, size_t star
 
 static void addition_behavior(token* op, shared_ptr<operands_group> operands)
 {
+	// Unpack the left operand if it is a variable
+	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->left);
+
+	// Unpack the right operand if it is a variable
+	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->right);
+
+	op->lexeme = to_string(
+		atoi(operands->left->lexeme.c_str())
+		+ atoi(operands->right->lexeme.c_str())
+	);
+
+	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
 	op->type = token_type::I32;
-	
-	// HACK: Sistemare questa parte, non è ottimizzata
-	if (operands->left->type == token_type::WORD)
-	{
-		visit(
-			[op, operands](auto &value)
-			{
-				op->lexeme = to_string(value + atoi(operands->right->lexeme.c_str()));
-			},
-			variables_32bit.at(operands->left->lexeme)
-		);
-	}
-	else
-	{
-		op->lexeme = to_string(
-			atoi(operands->left->lexeme.c_str()) 
-			+ atoi(operands->right->lexeme.c_str())
-		);
-	}
 }
 
 
 static void subtraction_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	op->type = token_type::I32;
+	// Unpack the left operand if it is a variable
+	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->left);
+
+	// Unpack the right operand if it is a variable
+	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->right);
+
 	op->lexeme = to_string(
 		atoi(operands->left->lexeme.c_str())
 		- atoi(operands->right->lexeme.c_str())
 	);
+
+	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	op->type = token_type::I32;
 }
 
 
 static void multiplication_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	op->type = token_type::I32;
+	// Unpack the left operand if it is a variable
+	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->left);
+
+	// Unpack the right operand if it is a variable
+	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->right);
+
 	op->lexeme = to_string(
 		atoi(operands->left->lexeme.c_str())
 		* atoi(operands->right->lexeme.c_str())
 	);
+
+	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	op->type = token_type::I32;
 }
 
 
 static void division_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	op->type = token_type::I32;
+	// Unpack the left operand if it is a variable
+	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->left);
+
+	// Unpack the right operand if it is a variable
+	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+		unpack_variable(operands->right);
+
 	op->lexeme = to_string(
 		atoi(operands->left->lexeme.c_str())
 		/ atoi(operands->right->lexeme.c_str())
 	);
+
+	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	op->type = token_type::I32;
 }
 
 
@@ -136,10 +214,10 @@ static void var_declaration_behavior(token* op, shared_ptr<operands_group> opera
 
 	if (operands->right->type != token_type::WORD)
 		exit_with(err);
-	
+
 	if (operands->rightmost->type != token_type::PRIMITIVE_TYPE)
 		exit_with(err);
-	
+
 	// TODO: Add other types
 	if (operands->rightmost->lexeme == "i32")
 		variables_32bit.insert({operands->right->lexeme, static_cast<int>(0)});
@@ -154,9 +232,9 @@ static void assignment_behavior(token* op, shared_ptr<operands_group> operands)
 	// HACK: Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
 	// HACK: Find a way to check where the variable is stored
 	variables_32bit.at(operands->left->lexeme) = atoi(operands->right->lexeme.c_str());
-	
+
 	op->type = operands->right->type;
-	
+
 	visit(
 		[op](auto &value123)
 		{
@@ -187,14 +265,14 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 	auto [right_operand, rightmost_operand] = find_right_operands(tokens, pos);
 
 	operands_position intended_pos = get_operands_position(op->type);
-	
+
 	err->set_position(
 		op->file_name,
 		op->file_path,
 		op->row,
 		op->column
 	);
-	
+
 	bool left_needed = intended_pos == operands_position::LEFT;
 	bool left_doesnt_exists = not left_operand;
 
@@ -206,10 +284,10 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 
 	bool left_and_leftmost_needed = intended_pos == operands_position::LEFT_LEFT;
 	bool left_and_leftmost_dont_exist = not left_operand or not leftmost_operand;
-	
+
 	bool right_and_rightmost_needed = intended_pos == operands_position::RIGHT_RIGHT;
 	bool right_and_rightmost_dont_exist = not right_operand or not rightmost_operand;
-	
+
 	if (
 		(left_needed and left_doesnt_exists)
 		or (right_needed and right_doesnt_exists)
@@ -221,12 +299,10 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 
 	shared_ptr<operands_group> operands = make_shared<operands_group>(leftmost_operand, left_operand, right_operand, rightmost_operand);
 
-	// TODO: Create integer promotion
-
 	// TODO: Check if the operands are the intended types
 
 	auto behavior = operators_behaviors.find(op->type);
-	
+
 	if (behavior != operators_behaviors.end())
 		behavior->second(op, operands);
 
@@ -244,7 +320,7 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 		or intended_pos == operands_position::LEFT_RIGHT
 	)
 		right_operand->become_tombstone();
-	
+
 	if (intended_pos == operands_position::LEFT_LEFT)
 		leftmost_operand->become_tombstone();
 

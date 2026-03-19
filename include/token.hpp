@@ -2,13 +2,13 @@
 #define TOKEN_HPP
 
 #include <unordered_map>
-#include <optional>
-#include <expected>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <utility>
 #include <set>
+#include <utility>
+#include <vector>
+#include <expected>
+#include <string>
+#include <optional>
+#include <iostream>
 
 #include "error_manager.hpp"
 #include "color.hpp"
@@ -255,6 +255,15 @@ static const unordered_map<token_type, operator_arity> OPERATOR_ARITY_MAP = {
 };
 
 
+static const unordered_map<token_type, value_access_type> VALUE_ACCESS_TYPE_MAP = {
+	{ token_type::WORD, value_access_type::INDIRECT_VALUE },
+	{ token_type::I8, value_access_type::DIRECT_VALUE },
+	{ token_type::I16, value_access_type::DIRECT_VALUE },
+	{ token_type::I32, value_access_type::DIRECT_VALUE },
+	{ token_type::I64, value_access_type::DIRECT_VALUE },
+};
+
+
 static const set<pair<char_type, token_type>> CHAR_TOKEN_AVAILABLE_PAIRS = {
 	{ char_type::NUMBER, token_type::I8 },
 	{ char_type::NUMBER, token_type::I16 },
@@ -299,3 +308,4 @@ bool can_char_be_in_token(char_type c, token_type t);
 
 
 #endif
+

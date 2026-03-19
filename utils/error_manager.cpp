@@ -38,7 +38,7 @@ int interpreter_error::get_number_id()
 }
 
 
-interpreter_error* interpreter_error::set_position(string file_name, string file_path, size_t row, size_t column)
+interpreter_error* interpreter_error::set_position(string& file_name, string& file_path, size_t row, size_t column)
 {
 	this->file_name = file_name;
 	this->file_path = file_path;

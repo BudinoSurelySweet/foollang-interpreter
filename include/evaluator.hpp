@@ -26,11 +26,16 @@ struct operands_group
 };
 
 
+// TODO: Rinominare i nomi con "symbol tables"
 // HACK: Sostituire la variant con i tipi "sicuri", e.g. int16_t, int32_t, ...
 inline auto variables_8bit = unordered_map<string, variant<char, unsigned char>>();
 inline auto variables_16bit = unordered_map<string, variant<short int, unsigned short int>>();
 inline auto variables_32bit = unordered_map<string, variant<int, unsigned int, float>>();
 inline auto variables_64bit = unordered_map<string, variant<long long int, unsigned long long int, double>>();
+// inline auto variables_8bit = unordered_map<string, variant<byte, signed char, unsigned char>>();
+// inline auto variables_16bit = unordered_map<string, variant<int16_t, uint16_t>>();
+// inline auto variables_32bit = unordered_map<string, variant<int32_t, uint32_t, float>>();
+// inline auto variables_64bit = unordered_map<string, variant<int64_t, uint64_t, double>>();
 
 
 void evaluate_operands(vector<token>* tokens, token* op, size_t pos);
