@@ -3,6 +3,7 @@
 #include "token.hpp"
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 
 operands_group::operands_group(token* leftmost, token* left, token* right, token* rightmost)
@@ -223,9 +224,27 @@ static void var_declaration_behavior(token* op, shared_ptr<operands_group> opera
 	if (operands->rightmost->type != token_type::PRIMITIVE_LANG_TYPE)
 		exit_with(err);
 
-	// TODO: Add other types
-	if (operands->rightmost->lexeme == "i32")
-		variables_32bit.insert({operands->right->lexeme, static_cast<int>(0)});
+	// HACK: Questa blocco di codice è molto verboso, renderlo automatico
+	if (operands->rightmost->lexeme == "i8")
+		variables_8bit.insert({operands->right->lexeme, static_cast<int8_t>(0)});
+	else if (operands->rightmost->lexeme == "i16")
+		variables_16bit.insert({operands->right->lexeme, static_cast<int16_t>(0)});
+	else if (operands->rightmost->lexeme == "i32")
+		variables_32bit.insert({operands->right->lexeme, static_cast<int32_t>(0)});
+	else if (operands->rightmost->lexeme == "i64")
+		variables_64bit.insert({operands->right->lexeme, static_cast<int64_t>(0)});
+	else if (operands->rightmost->lexeme == "u8")
+		variables_8bit.insert({operands->right->lexeme, static_cast<uint8_t>(0)});
+	else if (operands->rightmost->lexeme == "u16")
+		variables_16bit.insert({operands->right->lexeme, static_cast<uint16_t>(0)});
+	else if (operands->rightmost->lexeme == "u32")
+		variables_32bit.insert({operands->right->lexeme, static_cast<uint32_t>(0)});
+	else if (operands->rightmost->lexeme == "u64")
+		variables_64bit.insert({operands->right->lexeme, static_cast<uint64_t>(0)});
+	else if (operands->rightmost->lexeme == "f32")
+		variables_32bit.insert({operands->right->lexeme, static_cast<float>(0)});
+	else if (operands->rightmost->lexeme == "f64")
+		variables_64bit.insert({operands->right->lexeme, static_cast<double>(0)});
 
 	op->type = operands->right->type;
 	op->lexeme = operands->right->lexeme;
@@ -236,14 +255,18 @@ static void assignment_behavior(token* op, shared_ptr<operands_group> operands)
 {
 	// HACK: Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
 	// HACK: Find a way to check where the variable is stored
-	variables_32bit.at(operands->left->lexeme) = atoi(operands->right->lexeme.c_str());
+
+	auto tuple = variables_32bit.find(operands->left->lexeme);
+
+	if (tuple != variables_32bit.end())
+		variables_32bit.at(operands->left->lexeme) = static_cast<int8_t>(atoi(operands->right->lexeme.c_str()));
 
 	op->type = operands->right->type;
 
 	visit(
-		[op](auto &value123)
+		[op](auto &value)
 		{
-			op->lexeme = to_string(value123);
+			op->lexeme = to_string(value);
 		},
 		variables_32bit.at(operands->left->lexeme)
 	);
