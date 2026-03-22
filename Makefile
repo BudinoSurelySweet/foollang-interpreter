@@ -1,5 +1,5 @@
 CXX      := g++
-CXXFLAGS := -std=c++23 -Wall -Wextra -g -Iinclude -Iutils
+CXXFLAGS := -std=c++23 -Wall -Wextra -g -Iinclude
 LDFLAGS  := 
 BUILD    := ./obj
 BIN      := ./bin
@@ -23,9 +23,12 @@ C := $(ANSI_$(COLOR))
 R := $(ANSI_RESET)
 # -----------------------------
 
-SRCS := $(wildcard $(SRC)/*.cpp) $(wildcard $(UTILS)/*.cpp)
+SRCS := $(shell find $(SRC) -name "*.cpp")
 OBJS := $(patsubst %.cpp, $(BUILD)/%.o, $(notdir $(SRCS)))
 TARGET := $(BIN)/output
+
+# Use vpath to find source files in subdirectories
+VPATH := $(SRC):$(shell find $(SRC) -type d | tr '\n' ':')
 
 
 .PHONY: all clean directories run
@@ -37,12 +40,8 @@ $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 	@printf "$(C)Build completed: $(TARGET)$(R)\n"
 
-$(BUILD)/%.o: $(SRC)/%.cpp
+$(BUILD)/%.o: %.cpp
 	@printf "$(C)Compiling SRC $<...$(R)\n"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(BUILD)/%.o: $(UTILS)/%.cpp
-	@printf "$(C)Compiling UTILS $<...$(R)\n"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 directories:

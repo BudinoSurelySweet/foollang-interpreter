@@ -1,5 +1,9 @@
 #include "token.hpp"
 
+#include "error_manager.hpp"
+#include "number_manipulation.hpp"
+#include <cstdint>
+
 using namespace std;
 
 
@@ -62,12 +66,27 @@ optional<token> create_token(char character, string target_file_name, string tar
 	}
 	else
 	{
-		// HACK: Creare un sistema per detectare le keyword
+		// HACK: Create a system to detect keywords
 		if (context == "var")
 			context_type = token_type::VAR_DECLARATION;
 
 		if (is_primitive_lang_type(context))
-			context_type = token_type::PRIMITIVE_LANG_TYPE;
+			context_type = get_primitive_lang_type(context);
+
+		// HACK: This is not available for all types
+		if (context_type == token_type::I32 and not can_be_parsed_as_integer<int32_t>(context))
+		{
+			if (can_be_parsed_as_integer<int64_t>(context))
+				context_type = token_type::I64;
+			else if (can_be_parsed_as_integer<uint64_t>(context))
+				context_type = token_type::U64;
+			else
+			{
+				// TODO: Make the error's push a little bit more elegant
+				auto err = new interpreter_error(error_id::INTEGER_OVERFLOW);
+				exit_with(err->set_position(file_name, file_path, row, column));
+			}
+		}
 
 		token t = token(context_type, context, file_name, file_path, row, column);
 		
@@ -77,8 +96,8 @@ optional<token> create_token(char character, string target_file_name, string tar
 
 		context.clear();
 		
-		// Re-iter the same character because it was skipped to create the current token.
-		// It's granted that it will start the token and return nullptr.
+		// Reiterate the same character because it was skipped to create the current token.
+		// It's granted that it will start the token and return a null pointer.
 		create_token(character, target_file_name, target_file_path, target_row, target_column);
 
 		return t;
@@ -167,15 +186,35 @@ bool is_operator(token_type t)
 }
 
 
-bool is_primitive_lang_type(string t)
+bool is_primitive_lang_type(const string& s)
 {
-	auto tuple = PRIMITIVE_LANG_TYPE_KEYWORDS.find(t);
+	auto tuple = PRIMITIVE_LANG_TYPE_KEYWORDS.find(s);
 
 	if (tuple != PRIMITIVE_LANG_TYPE_KEYWORDS.end())
 		return true;
 
 	return false;
 }
+
+
+bool is_primitive_lang_type(token_type& t)
+{
+	if (token_type::LANG_TYPE_H < t and t > token_type::END_LANG_TYPE_H)
+		return true;
+
+	return false;
+}
+
+
+token_type get_primitive_lang_type(const string& s)
+{
+	auto tuple = PRIMITIVE_LANG_TYPE_KEYWORDS.find(s);
+
+	if (tuple != PRIMITIVE_LANG_TYPE_KEYWORDS.end())
+		return tuple->second;
+
+	// FIX: Push an error: the string is not a primitive type
+};
 
 
 bool can_char_be_in_token(char_type c, token_type t)

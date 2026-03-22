@@ -1,5 +1,4 @@
-#ifndef OPERATOR_MANAGER_HPP
-#define OPERATOR_MANAGER_HPP
+#pragma once
 
 #include <vector>
 
@@ -19,4 +18,3 @@ public:
 	void reset();
 };
 
-#endif

@@ -1,9 +1,17 @@
 #include "evaluator.hpp"
-#include "error_manager.hpp"
-#include "token.hpp"
+
+#include <charconv>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <functional>
+#include <variant>
+
+#include "symbols.hpp"
+#include "error_manager.hpp"
+#include "token.hpp"
+#include "number_manipulation.hpp"
 
 
 operands_group::operands_group(token* leftmost, token* left, token* right, token* rightmost)
@@ -12,62 +20,6 @@ operands_group::operands_group(token* leftmost, token* left, token* right, token
 	this->left = left;
 	this->right = right;
 	this->rightmost = rightmost;
-}
-
-
-static void unpack_variable(token* t)
-{
-	static auto err = new interpreter_error(error_id::NON_EXISTENT_VARIABLE);
-
-	err->set_position(t->file_name, t->file_path, t->row, t->column);
-
-	auto candidate_8bit = variables_8bit.find(t->lexeme);
-
-	if (candidate_8bit != variables_8bit.end())
-	{
-		// TODO: Non ancora implementato
-		
-		return;
-	}
-
-	auto candidate_16bit = variables_16bit.find(t->lexeme);
-
-	if (candidate_16bit != variables_16bit.end())
-	{
-		// TODO: Non ancora implementato
-
-		return;
-	}
-
-	auto candidate_32bit = variables_32bit.find(t->lexeme);
-
-	if (candidate_32bit != variables_32bit.end())
-	{
-		auto visitor = [t](auto &value)
-		{
-			t->lexeme = to_string(value);
-
-			if (typeid(value) == typeid(int))
-				t->type = token_type::I32;
-			else if (typeid(value) == typeid(unsigned int)) {} // TODO: Non ancora implementato
-			else if (typeid(value) == typeid(float)) {} // TODO: Non ancora implementato
-		};
-
-		visit(visitor, variables_32bit.at(t->lexeme));
-
-		return;
-	}
-
-	auto candidate_64bit = variables_64bit.find(t->lexeme);
-
-	if (candidate_64bit != variables_64bit.end())
-	{
-		// TODO: Non ancora implementato
-		
-		return;
-	}
-
-	exit_with(err);
 }
 
 
@@ -129,122 +81,156 @@ static pair<token*, token*> find_right_operands(vector<token>* list, size_t star
 
 static void addition_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	// Unpack the left operand if it is a variable
-	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->left);
-
-	// Unpack the right operand if it is a variable
-	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->right);
-
-	op->lexeme = to_string(
-		atoi(operands->left->lexeme.c_str())
-		+ atoi(operands->right->lexeme.c_str())
-	);
-
-	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
-	op->type = token_type::I32;
+	// // Unpack the left operand if it is a variable
+	// if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->left);
+	//
+	// // Unpack the right operand if it is a variable
+	// if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->right);
+	//
+	// op->lexeme = to_string(
+	// 	atoi(operands->left->lexeme.c_str())
+	// 	+ atoi(operands->right->lexeme.c_str())
+	// );
+	//
+	// // HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	// op->type = token_type::I32;
 }
 
 
 static void subtraction_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	// Unpack the left operand if it is a variable
-	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->left);
-
-	// Unpack the right operand if it is a variable
-	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->right);
-
-	op->lexeme = to_string(
-		atoi(operands->left->lexeme.c_str())
-		- atoi(operands->right->lexeme.c_str())
-	);
-
-	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
-	op->type = token_type::I32;
+	// // Unpack the left operand if it is a variable
+	// if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->left);
+	//
+	// // Unpack the right operand if it is a variable
+	// if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->right);
+	//
+	// op->lexeme = to_string(
+	// 	atoi(operands->left->lexeme.c_str())
+	// 	- atoi(operands->right->lexeme.c_str())
+	// );
+	//
+	// // HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	// op->type = token_type::I32;
 }
 
 
 static void multiplication_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	// Unpack the left operand if it is a variable
-	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->left);
-
-	// Unpack the right operand if it is a variable
-	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->right);
-
-	op->lexeme = to_string(
-		atoi(operands->left->lexeme.c_str())
-		* atoi(operands->right->lexeme.c_str())
-	);
-
-	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
-	op->type = token_type::I32;
+	// // Unpack the left operand if it is a variable
+	// if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->left);
+	//
+	// // Unpack the right operand if it is a variable
+	// if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->right);
+	//
+	// op->lexeme = to_string(
+	// 	atoi(operands->left->lexeme.c_str())
+	// 	* atoi(operands->right->lexeme.c_str())
+	// );
+	//
+	// // HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	// op->type = token_type::I32;
 }
 
 
 static void division_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	// Unpack the left operand if it is a variable
-	if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->left);
-
-	// Unpack the right operand if it is a variable
-	if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
-		unpack_variable(operands->right);
-
-	op->lexeme = to_string(
-		atoi(operands->left->lexeme.c_str())
-		/ atoi(operands->right->lexeme.c_str())
-	);
-
-	// HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
-	op->type = token_type::I32;
+	// // Unpack the left operand if it is a variable
+	// if (get_value_access_type(operands->left->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->left);
+	//
+	// // Unpack the right operand if it is a variable
+	// if (get_value_access_type(operands->right->type) == value_access_type::INDIRECT_VALUE)
+	// 	unpack_variable(operands->right);
+	//
+	// op->lexeme = to_string(
+	// 	atoi(operands->left->lexeme.c_str())
+	// 	/ atoi(operands->right->lexeme.c_str())
+	// );
+	//
+	// // HACK: Fare il tipo "dinamico", cioè che capisce di quale tipo deve diventare
+	// op->type = token_type::I32;
 }
 
 
 static void var_declaration_behavior(token* op, shared_ptr<operands_group> operands)
 {
-	static auto err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
-
-	err->set_position(
-		op->file_name,
-		op->file_path,
-		op->row,
-		op->column
-	);
+	static auto operands_not_valid_err = new interpreter_error(error_id::OPERANDS_NOT_VALID);
+	static auto non_existent_lang_type_err = new interpreter_error(error_id::NON_EXISTENT_LANG_TYPE);
 
 	if (operands->right->type != token_type::WORD)
-		exit_with(err);
+		exit_with(operands_not_valid_err->set_position(op));
 
-	if (operands->rightmost->type != token_type::PRIMITIVE_LANG_TYPE)
-		exit_with(err);
+	if (is_primitive_lang_type(operands->rightmost->type))
+		exit_with(operands_not_valid_err->set_position(op));
 
-	// HACK: Questa blocco di codice è molto verboso, renderlo automatico
-	if (operands->rightmost->lexeme == "i8")
-		variables_8bit.insert({operands->right->lexeme, static_cast<int8_t>(0)});
-	else if (operands->rightmost->lexeme == "i16")
-		variables_16bit.insert({operands->right->lexeme, static_cast<int16_t>(0)});
-	else if (operands->rightmost->lexeme == "i32")
-		variables_32bit.insert({operands->right->lexeme, static_cast<int32_t>(0)});
-	else if (operands->rightmost->lexeme == "i64")
-		variables_64bit.insert({operands->right->lexeme, static_cast<int64_t>(0)});
-	else if (operands->rightmost->lexeme == "u8")
-		variables_8bit.insert({operands->right->lexeme, static_cast<uint8_t>(0)});
-	else if (operands->rightmost->lexeme == "u16")
-		variables_16bit.insert({operands->right->lexeme, static_cast<uint16_t>(0)});
-	else if (operands->rightmost->lexeme == "u32")
-		variables_32bit.insert({operands->right->lexeme, static_cast<uint32_t>(0)});
-	else if (operands->rightmost->lexeme == "u64")
-		variables_64bit.insert({operands->right->lexeme, static_cast<uint64_t>(0)});
-	else if (operands->rightmost->lexeme == "f32")
-		variables_32bit.insert({operands->right->lexeme, static_cast<float>(0)});
-	else if (operands->rightmost->lexeme == "f64")
-		variables_64bit.insert({operands->right->lexeme, static_cast<double>(0)});
+	LangType value;
+
+	switch (operands->rightmost->type) {
+		case token_type::LANG_TYPE_C8:
+			value = static_cast<char8_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_C16:
+			value = static_cast<char16_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_C32:
+			value = static_cast<char32_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_I8:
+			value = static_cast<int8_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_I16:
+			value = static_cast<int16_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_I32:
+			value = static_cast<int32_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_I64:
+			value = static_cast<int64_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_U8:
+			value = static_cast<uint8_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_U16:
+			value = static_cast<uint16_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_U32:
+			value = static_cast<uint32_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_U64:
+			value = static_cast<uint64_t>(0);
+			break;
+
+		case token_type::LANG_TYPE_F32:
+			value = static_cast<float>(0);
+			break;
+
+		case token_type::LANG_TYPE_F64:
+			value = static_cast<double>(0);
+			break;
+
+		default:
+			exit_with(non_existent_lang_type_err->set_position(op));
+			break;
+	}
+
+	global_symbols.define(operands->right->lexeme, value);
 
 	op->type = operands->right->type;
 	op->lexeme = operands->right->lexeme;
@@ -256,11 +242,65 @@ static void assignment_behavior(token* op, shared_ptr<operands_group> operands)
 	// HACK: Check if the right_operand is a rvalue, cause if not I'll have to get its value from the has table
 	// HACK: Find a way to check where the variable is stored
 
-	auto tuple = variables_32bit.find(operands->left->lexeme);
+	LangType value;
 
-	if (tuple != variables_32bit.end())
-		variables_32bit.at(operands->left->lexeme) = static_cast<int8_t>(atoi(operands->right->lexeme.c_str()));
+	// BUG: Non viene mai scelto u32 o un tipo diverso da i32, perché in `create_token`
+	// dico che i numeri sono sempre i32. Aggiungere il parser di numeri dentro
+	// `create_token` così che posso fare la promozione a i64.
 
+	if (operands->right->type == token_type::I32)
+		printf("\n\nI32\n\n");
+	else
+		printf("\n\nnot I32\n\n");
+
+	switch (operands->right->type) {
+		case token_type::C8:
+			// TODO: Add support for this
+			break;
+		case token_type::C16:
+			// TODO: Add support for this
+			break;
+		case token_type::C32:
+			// TODO: Add support for this
+			break;
+		case token_type::I8:
+			value = parse_integer<int8_t>(operands->right->lexeme);
+			break;
+		case token_type::I16:
+			value = parse_integer<int16_t>(operands->right->lexeme);
+			break;
+		case token_type::I32:
+			value = parse_integer<int32_t>(operands->right->lexeme);
+			break;
+		case token_type::I64:
+			value = parse_integer<int64_t>(operands->right->lexeme);
+			break;
+		case token_type::U8:
+			value = parse_integer<uint8_t>(operands->right->lexeme);
+			break;
+		case token_type::U16:
+			value = parse_integer<uint16_t>(operands->right->lexeme);
+			break;
+		case token_type::U32:
+			value = parse_integer<uint32_t>(operands->right->lexeme);
+			break;
+		case token_type::U64:
+			value = parse_integer<uint64_t>(operands->right->lexeme);
+			break;
+		case token_type::F32:
+			value = stof(operands->right->lexeme);
+			break;
+		case token_type::F64:
+			value = stod(operands->right->lexeme);
+			break;
+		default:
+			// FIX: Push err: right operand is not a number
+			break;
+	}
+	
+	global_symbols.set(operands->left->lexeme, value);
+
+	// Operator update
 	op->type = operands->right->type;
 
 	visit(
@@ -268,7 +308,7 @@ static void assignment_behavior(token* op, shared_ptr<operands_group> operands)
 		{
 			op->lexeme = to_string(value);
 		},
-		variables_32bit.at(operands->left->lexeme)
+		global_symbols.table().at(operands->left->lexeme)
 	);
 }
 
@@ -331,6 +371,7 @@ void evaluate_operands(vector<token>* tokens, token* op, size_t pos)
 
 	auto behavior = operators_behaviors.find(op->type);
 
+	// Call the respective function based on the operator
 	if (behavior != operators_behaviors.end())
 		behavior->second(op, operands);
 

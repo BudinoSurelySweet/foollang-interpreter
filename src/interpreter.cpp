@@ -1,16 +1,15 @@
-#include <vector>
-#include <memory>
-#include <optional>
-
 #include "interpreter.hpp"
+
+#include <string>
+#include <variant>
+#include <vector>
+#include <optional>
+#include <iostream>
+
+#include "symbols.hpp"
 #include "token.hpp"
 #include "operator_manager.hpp"
 #include "evaluator.hpp"
-#include "color.hpp"
-
-#include <iostream>
-
-using namespace std;
 
 
 static void update_position(char* character, size_t* row, size_t* column)
@@ -122,5 +121,18 @@ void interpret(string& source_code, string file_name, string file_path)
 			cout << endl;
 	}
 
+	cout << endl << endl << "Global symbols:" << endl;
+
+	for (auto& [key, value] : global_symbols.table()) {
+		visit(
+			[key, index = value.index()](auto &val)
+			{
+				cout << key << " (LangType index: " << index << ") = " << to_string(val) << endl;
+			},
+			value
+		);
+	}
+
 	delete operator_list_creator;
 }
+

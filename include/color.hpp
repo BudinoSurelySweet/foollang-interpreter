@@ -1,5 +1,4 @@
-#ifndef COLOR_HPP
-#define COLOR_HPP
+#pragma once
 
 #include <string>
 
@@ -35,5 +34,3 @@ enum color
 
 string color(const char* target_text, enum color text_color);
 
-
-#endif

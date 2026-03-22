@@ -1,17 +1,11 @@
-#ifndef TOKEN_HPP
-#define TOKEN_HPP
+#pragma once
 
 #include <unordered_map>
 #include <set>
 #include <utility>
-#include <vector>
-#include <expected>
+
 #include <string>
 #include <optional>
-#include <iostream>
-
-#include "error_manager.hpp"
-#include "color.hpp"
 
 #define OPERATORS_LEVELS_OF_PRECEDENCE_NUMBER 14
 
@@ -42,7 +36,7 @@ enum class char_type
 	AMPERSAND = '&',
 	PERCENTAGE = '%',
 
-	// Punctuations
+	// Punctuation
 	COMMA = ',',
 	COLON = ':',
 	SEMICOLON = ';',
@@ -64,10 +58,37 @@ enum class token_type
 	NONE,
 	TOMBSTONE, // Used by the evaluator
 
-	WORD, // [a-zA-Z][a-zA-Z0-9]* <- avarage regex enjoyer
-	PRIMITIVE_LANG_TYPE, // Every keyword that refer to a type: i32, u64, f32
+	WORD, // [a-zA-Z][a-zA-Z0-9]* <- average regex enjoyer
+
+	// Every keyword that refer to a type: i32, u64, f32
+	LANG_TYPE_H,
+
+		PRIMITIVE_LANG_TYPE,
+
+		LANG_TYPE_C8, // Char 8 bit - 1 bytes
+		LANG_TYPE_C16, // Char 16 bit - 2 bytes
+		LANG_TYPE_C32, // Char 32 bit - 4 bytes
+
+		LANG_TYPE_I8, // Integer 8 bit - 1 bytes
+		LANG_TYPE_I16, // Integer 16 bit - 2 bytes
+		LANG_TYPE_I32, // Integer 32 bit - 4 bytes
+		LANG_TYPE_I64, // Integer 64 bit - 8 bytes
+
+		LANG_TYPE_U8, // Unsigned integer 8 bit - 1 bytes
+		LANG_TYPE_U16, // Unsigned integer 16 bit - 2 bytes
+		LANG_TYPE_U32, // Unsigned integer 32 bit - 4 bytes
+		LANG_TYPE_U64, // Unsigned integer 64 bit - 8 bytes
+
+		LANG_TYPE_F32, // Float 32 bit - 4 bytes
+		LANG_TYPE_F64, // Float 64 bit - 8 bytes
+
+	END_LANG_TYPE_H,
 	
 	NUMBERS_H,
+
+		C8, // Char 8 bit - 1 bytes
+		C16, // Char 16 bit - 2 bytes
+		C32, // Char 32 bit - 4 bytes
 
 		I8, // Integer 8 bit - 1 bytes
 		I16, // Integer 16 bit - 2 bytes
@@ -282,19 +303,23 @@ static const set<pair<char_type, token_type>> CHAR_TOKEN_AVAILABLE_PAIRS = {
 };
 
 
-static const set<string> PRIMITIVE_LANG_TYPE_KEYWORDS = {
-	"i8", 
-	"i16", 
-	"i32", 
-	"i64", 
+static const unordered_map<string, token_type> PRIMITIVE_LANG_TYPE_KEYWORDS = {
+	{ "c8", token_type::LANG_TYPE_C8 },
+	{ "c16", token_type::LANG_TYPE_C16 },
+	{ "c32", token_type::LANG_TYPE_C32 },
 
-	"u8", 
-	"u16", 
-	"u32", 
-	"u64", 
+	{ "i8", token_type::LANG_TYPE_I8 }, 
+	{ "i16", token_type::LANG_TYPE_I16 }, 
+	{ "i32", token_type::LANG_TYPE_I32 }, 
+	{ "i64", token_type::LANG_TYPE_I64 }, 
 
-	"f32", 
-	"f64", 
+	{ "u8", token_type::LANG_TYPE_U8 }, 
+	{ "u16", token_type::LANG_TYPE_U16 }, 
+	{ "u32", token_type::LANG_TYPE_U32 }, 
+	{ "u64", token_type::LANG_TYPE_U64 }, 
+
+	{ "f32", token_type::LANG_TYPE_F32 }, 
+	{ "f64", token_type::LANG_TYPE_F64 }, 
 };
 
 #pragma endregion
@@ -302,6 +327,7 @@ static const set<string> PRIMITIVE_LANG_TYPE_KEYWORDS = {
 
 optional<token> create_token(char character, string target_file_name, string target_file_path, size_t target_row, size_t target_column);
 
+// TODO: Change every type in functions below with their reference
 
 #pragma region Get token traits
 
@@ -326,13 +352,16 @@ value_access_type get_value_access_type(token_type t);
 bool is_operator(token_type t);
 
 
-bool is_primitive_lang_type(string t);
+bool is_primitive_lang_type(const string& s);
+
+
+bool is_primitive_lang_type(token_type& t);
+
+
+token_type get_primitive_lang_type(const string& s);
 
 
 bool can_char_be_in_token(char_type c, token_type t);
 
 #pragma endregion
-
-
-#endif
 
